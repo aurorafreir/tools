@@ -1,4 +1,4 @@
-TOOLS_DIR=$(dirname "$0") # Gets this script's running directory"
+TOOLS_DIR=$(dirname "$PWD") # Gets this script's running directory"
 
 export PYTHONPATH="$TOOLS_DIR/python"
 export MAYA_MODULE_PATH="$TOOLS_DIR/third_party/mgear_4.2.2/release"
