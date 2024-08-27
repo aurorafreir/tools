@@ -40,3 +40,29 @@ def extract_skeleton() -> None:
             pm.parent(jnt, world=True)
 
     return None
+
+
+def make_offset_joint(joints: list[pm.nt.Joint] = None) -> None:
+    """
+    Creates a parent joint for each joint in $joints, or each selected joint, so that the selected joint has zeroed
+        transforms and joint orients.
+    :param joints: List of joints to make offset joints for.
+    :return: None
+    """
+    if not joints:
+        if not pm.selected():
+            raise Exception("Nothing selected or set in $joints flag")
+        joints = pm.selected(type=pm.nt.Joint)
+        pm.select(deselect=True)
+
+    for joint in joints:
+        off_jnt = pm.joint(name=f"{joint.split('_jnt')[0]}_off_jnt")
+        pm.parent(off_jnt, joint)
+        pm.xform(off_jnt, translation=(0, 0, 0))
+        pm.joint(off_jnt, orientJoint="none", edit=True)
+        pm.parent(off_jnt, joint.getParent())
+        pm.parent(joint, off_jnt)
+
+        off_jnt.radius.set(joint.radius.get() / 2)
+
+    return None
