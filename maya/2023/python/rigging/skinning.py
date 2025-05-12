@@ -70,3 +70,13 @@ def import_skin():
             print(f"# Imported ngskin data for {mesh_name}")
 
     return None
+
+def remove_unused_ngskin_nodes():
+    """
+    Checks if there's any skinCluster inputs to the ngskin node, and deletes the ngskin node if not.
+    """
+    for i in pm.ls(type="ngst2SkinLayerData"):
+        if not [x for x in i.inputs() if isinstance(i, pm.nt.skinCluster)]:
+            pm.delete(i)
+
+    return None
