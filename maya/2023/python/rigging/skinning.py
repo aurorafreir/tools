@@ -76,7 +76,7 @@ def remove_unused_ngskin_nodes():
     Checks if there's any skinCluster inputs to the ngskin node, and deletes the ngskin node if not.
     """
     for i in pm.ls(type="ngst2SkinLayerData"):
-        if not [x for x in i.inputs() if isinstance(i, pm.nt.skinCluster)]:
+        if not [x for x in i.inputs() if isinstance(x, pm.nt.SkinCluster)]:
             pm.delete(i)
 
     return None
