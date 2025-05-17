@@ -15,7 +15,22 @@ import ngSkinTools2.api as ngst_api
 from core import files
 
 
+def ensure_ngskin_is_loaded():
+    """
+    Makes sure ngskintools2 is loaded before doing any skin handling
+    """
+    if not pm.pluginInfo("ngSkinTools2", query=True, loaded=True):
+        if not pm.pluginInfo("ngSkinTools2", query=True, registered=True):
+            pm.displayError("ngSkinTools2 isn't installed")
+        else:
+            pm.loadPlugin("ngSkinTools2")
+            print("ngSkinTools loaded :)")
+
+    return None
+
+
 def export_skin():
+    ensure_ngskin_is_loaded()
     filepath, filename, raw_name, extension = files.current_paths()
     
     skin_dir = pathlib.Path(filepath.parent, "data", raw_name)
@@ -44,6 +59,7 @@ def export_skin():
 
     
 def import_skin():
+    ensure_ngskin_is_loaded()
     filepath, filename, raw_name, extension = files.current_paths()
 
     skin_dir = pathlib.Path(filepath.parent, "data", raw_name)
@@ -75,6 +91,7 @@ def remove_unused_ngskin_nodes():
     """
     Checks if there's any skinCluster inputs to the ngskin node, and deletes the ngskin node if not.
     """
+    ensure_ngskin_is_loaded()
     for i in pm.ls(type="ngst2SkinLayerData"):
         if not [x for x in i.inputs() if isinstance(x, pm.nt.SkinCluster)]:
             pm.delete(i)
