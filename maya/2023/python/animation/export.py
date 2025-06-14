@@ -16,6 +16,7 @@ def export_anim_per_ref():
     """
     Exports an fbx per imported reference
     """
+
     full_path, file_name, raw_name, extension = files.current_paths()
 
     namespaces = [i for i in pm.namespaceInfo(":", listOnlyNamespaces=True, recurse=True) if i not in ["UI", "shared"]]
@@ -39,11 +40,19 @@ def export_anim_per_ref():
                 pc = pm.parentConstraint(f"{ns}:{jnt.name()}", jnt)
                 constraints.append(pc)
 
-            pm.bakeResults(dup_joints, t=(0, 120), simulation=True)  # update to only bake when there's animations
+            pm.bakeResults(dup_joints, t=(0, 120), simulation=True)  # TODO AFOX update to only bake when there's animations
 
             pm.delete(constraints)
 
             export_path = pathlib.Path(full_path.parent, "animations", raw_name, f"{ns}.fbx")
+
+            # Create a temporary _OLD filepath for the previous exported fbx just in case
+            export_path_old = pathlib.Path(full_path.parent, "animations", raw_name, f"{ns}_OLD.fbx")
+            if export_path_old.exists():
+                export_path_old.unlink()
+            if export_path.exists():
+                export_path.rename(export_path_old)
+
             export_path.parent.mkdir(parents=True, exist_ok=True)
 
             pm.exportSelected(exportPath=export_path)
