@@ -12,20 +12,112 @@ from pymel.core import nt
 # LOCAL APPLICATION IMPORTS
 
 
+# EXAMPLE CODE
 """
 import pymel.core as pm
 from rigging import rig_on_skeleton as ros
 from importlib import reload
 reload(ros)
+
+# FIRST SETUP #
 rig = ros.Rig()
-rig.main_grp = "$Character_Name"
+rig.main_grp = "metahuman"
 rig.ensure_setup_is_correct()
 
-dummy_attr = ros.Attr(main_object=pm.PyNode("global_grp"), driver_prefix="global", attr_name="ik_controls", nice_name="IK CONTROLS", dummy_attr=True)
-dummy_attr.create_attr()
+driver = "DRIVER"
 
-att = ros.Attr(main_object=pm.PyNode("global_grp"), driver_prefix="global", attr_name="fkik", nice_name="FKIK", attr_type="float", float_min=0, float_max=1)
-att.create_attr()
+# ROOT CONTROLS #
+global_ctl = ros.CtrlSet(ctl_name="global", ctl_shape="square_with_point", shape_size=25, parent=rig.ctls_grp)
+global_ctl.create_ctl()
+
+global_off_ctl = ros.CtrlSet(ctl_name="global_off", ctl_shape="square", shape_size=20, parent=global_ctl.ctl)
+global_off_ctl.create_ctl()
+
+root_ctl = ros.CtrlSet(ctl_name="root", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, parent=rig.ctls_grp)
+root_ctl.create_ctl()
+
+# HIP CONTROLS #
+hip_ctl = ros.CtrlSet(ctl_name="hip", ctl_shape="box", offset=True, spaceswitch=True, shape_size=[40, 10, 30], parent=global_off_ctl.ctl)
+hip_ctl.create_ctl()
+pm.xform(hip_ctl.main_grp, translation=pm.xform("pelvis_drv", translation=True, query=True, worldSpace=True), worldSpace=True)
+
+
+# constraints #
+pm.parentConstraint(root_ctl.ctl, "root_drv", maintainOffset=True)
+pm.parentConstraint(hip_ctl.ctl, "pelvis_drv", maintainOffset=True)
+
+# L HAND SETUP
+arm_l = ros.ThreeBoneLimb()
+arm_l.limb_name = "arm_l"
+arm_l.input_joints = ["upperarm_l_drv", "lowerarm_l_drv", "hand_l_drv"]
+arm_l.ikfk_suffix_replace = "_drv"
+arm_l.driver_object = driver
+arm_l.rig_parent = rig.rig_setup_grp
+arm_l.ctl_parent = rig.ctls_grp
+arm_l.create_limb_setup()
+# CONTROLS # 
+# driver
+hand_l_drv_ctl = ros.CtrlSet(ctl_name="hand_l_driver", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, transform_shape=[5,-5,0], parent=arm_l.rig_ctls_grp)
+hand_l_drv_ctl.create_ctl()
+pm.xform(hand_l_drv_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+# ik
+hand_l_ik_ctl = ros.CtrlSet(ctl_name="hand_l_ik", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_l.rig_ctls_grp)
+hand_l_ik_ctl.create_ctl()
+pm.xform(hand_l_ik_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+#upperarm_l_fk
+upperarm_l_fk_ctl = ros.CtrlSet(ctl_name="upperarm_l_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_l.rig_ctls_grp)
+upperarm_l_fk_ctl.create_ctl()
+pm.xform(upperarm_l_fk_ctl.main_grp, matrix=pm.xform("upperarm_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+#lowerarm_l_fk
+lowerarm_l_fk_ctl = ros.CtrlSet(ctl_name="lowerarm_l_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=upperarm_l_fk_ctl.ctl)
+lowerarm_l_fk_ctl.create_ctl()
+pm.xform(lowerarm_l_fk_ctl.main_grp, matrix=pm.xform("lowerarm_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+#hand_l_fk
+hand_l_fk_ctl = ros.CtrlSet(ctl_name="hand_l_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=5, parent=lowerarm_l_fk_ctl.ctl)
+hand_l_fk_ctl.create_ctl()
+pm.xform(hand_l_fk_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+
+arm_l.ik_ctl = hand_l_ik_ctl.ctl
+arm_l.fk_ctls = [upperarm_l_fk_ctl.ctl, lowerarm_l_fk_ctl.ctl, hand_l_fk_ctl.ctl]
+arm_l.driver_ctl = hand_l_drv_ctl.ctl
+arm_l.create_three_bone_limb()
+
+
+# R HAND SETUP
+arm_r = ros.ThreeBoneLimb()
+arm_r.limb_name = "arm_r"
+arm_r.input_joints = ["upperarm_r_drv", "lowerarm_r_drv", "hand_r_drv"]
+arm_r.ikfk_suffix_replace = "_drv"
+arm_r.driver_object = driver
+arm_r.rig_parent = rig.rig_setup_grp
+arm_r.ctl_parent = rig.ctls_grp
+arm_r.create_limb_setup()
+# CONTROLS # 
+# driver
+hand_r_drv_ctl = ros.CtrlSet(ctl_name="hand_r_driver", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, transform_shape=[-5,5,0], parent=arm_r.rig_ctls_grp)
+hand_r_drv_ctl.create_ctl()
+pm.xform(hand_r_drv_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+# ik
+hand_r_ik_ctl = ros.CtrlSet(ctl_name="hand_r_ik", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp)
+hand_r_ik_ctl.create_ctl()
+pm.xform(hand_r_ik_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+#upperarm_l_fk
+upperarm_r_fk_ctl = ros.CtrlSet(ctl_name="upperarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp)
+upperarm_r_fk_ctl.create_ctl()
+pm.xform(upperarm_r_fk_ctl.main_grp, matrix=pm.xform("upperarm_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+#lowerarm_l_fk
+lowerarm_r_fk_ctl = ros.CtrlSet(ctl_name="lowerarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=upperarm_r_fk_ctl.ctl)
+lowerarm_r_fk_ctl.create_ctl()
+pm.xform(lowerarm_r_fk_ctl.main_grp, matrix=pm.xform("lowerarm_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+#hand_l_fk
+hand_r_fk_ctl = ros.CtrlSet(ctl_name="hand_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=5, parent=lowerarm_r_fk_ctl.ctl)
+hand_r_fk_ctl.create_ctl()
+pm.xform(hand_r_fk_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+
+arm_r.ik_ctl = hand_r_ik_ctl.ctl
+arm_r.fk_ctls = [upperarm_r_fk_ctl.ctl, lowerarm_r_fk_ctl.ctl, hand_r_fk_ctl.ctl]
+arm_r.driver_ctl = hand_r_drv_ctl.ctl
+arm_r.create_three_bone_limb()
 
 """
 
@@ -84,6 +176,67 @@ def lock_hide_default_attrs(obj:pm.nt.Transform,
         pm.setAttr(f"{obj}.{attr}", lock=lock, keyable=not hide)
     return None
 
+def set_up_space_switching(driver_obj:pm.nt.Transform, attr:str, driven_obj:pm.nt.Transform, space_objects:list):
+    """
+
+    :param driver_obj:
+    :param attr:
+    :param driven_obj:
+    :param space_objects:
+    :return:
+    """
+
+    # TODO AFOX
+
+    return None
+
+def fkik_quat_setup(name="",
+                        input_obj_a=pm.nt.Transform,
+                        input_obj_b=pm.nt.Transform,
+                        output_obj=pm.nt.Transform,
+                        slerp_t_obj=pm.nt.Transform,
+                        slerp_t_attr_str="",
+                        slerp_t_attr=None,
+                        slerp_t_attr_flip=False,
+                    ):
+        """
+        :param name:
+        :param input_obj_a:
+        :param input_obj_b:
+        :param output_obj:
+        :param slerp_t_obj:
+        :param slerp_t_attr_str:
+        :param slerp_t_attr:
+        :return: Created nodes as pm.nt types, euler_to_quat_a, euler_to_quat_b, quat_slerp, quat_to_euler
+        """
+        # TODO AFOX add in reverse node as an option
+        if slerp_t_attr_flip:
+            flipper_node = pm.createNode("floatMath")
+        if name:
+            name = f"{name}" if name.endswith("_") else f"{name}_"
+        euler_to_quat_a = pm.createNode("eulerToQuat", name=f"{name}eulerToQuat_a")
+        euler_to_quat_b = pm.createNode("eulerToQuat", name=f"{name}eulerToQuat_b")
+        quat_slerp = pm.createNode("quatSlerp", name=f"{name}quatSlerp")
+        quat_to_euler = pm.createNode("quatToEuler", name=f"{name}quatToEuler")
+
+        euler_to_quat_a.outputQuat >> quat_slerp.input1Quat
+        euler_to_quat_b.outputQuat >> quat_slerp.input2Quat
+
+        quat_slerp.outputQuat >> quat_to_euler.inputQuat
+
+        if input_obj_a:
+            input_obj_a.rotate >> euler_to_quat_a.inputRotate
+        if input_obj_b:
+            input_obj_b.rotate >> euler_to_quat_b.inputRotate
+        if output_obj:
+            quat_to_euler.outputRotate >> output_obj.rotate
+        if slerp_t_attr_str:
+            slerp_t_obj.attr(slerp_t_attr_str) >> quat_slerp.inputT
+        elif slerp_t_attr:
+            slerp_t_attr >> quat_slerp.inputT
+
+        return euler_to_quat_a, euler_to_quat_b, quat_slerp, quat_to_euler
+
 class Attr:
     def __init__(self, main_object:pm.nt.Transform,
                 attr_name:"",
@@ -91,7 +244,7 @@ class Attr:
                 nice_name="",
                 short_name="",
                 long_name="",
-                attr_type="",
+                attr_type="float",
                 dummy_attr = False,
 
                 float_min = None,
@@ -105,7 +258,7 @@ class Attr:
         self.nice_name = nice_name
         self.short_name = short_name if short_name else attr_name.lower().replace(" ", "")
         self.long_name = long_name if long_name else attr_name.replace(" ", "_")
-        self.attr_type = attr_type if attr_type else "float"
+        self.attr_type = attr_type
 
         self.dummy_attr = dummy_attr
 
@@ -113,6 +266,11 @@ class Attr:
         self.float_max = float_max
 
         self.proxy_objects = proxy_objects if proxy_objects else []
+
+        self.attr = None
+        self.driver_attr = None
+        self.driver_attr_str = None
+        self.sanitized_nice_name = None
 
     def create_attr(self):
         """
@@ -127,8 +285,8 @@ class Attr:
 
         name_kwargs = {"ln": self.attr_name, "nn": self.nice_name, "sn": self.short_name}
 
-        if not pm.attributeQuery(self.attr_name, node=self.main_object, exists=True):
-            pm.addAttr(self.main_object, **name_kwargs, **kwargs)
+        # if not pm.attributeQuery(self.attr_name, node=self.main_object, exists=True):
+        self.attr = pm.addAttr(self.main_object, **name_kwargs, **kwargs)
 
         # Dummy attributes should be visible but locked
         if self.dummy_attr:
@@ -137,20 +295,30 @@ class Attr:
             lock_hide_default_attrs(obj=self.main_object, custom=[self.attr_name], lock=False, hide=False)
 
         # Create proxy attr on DRIVER node
-        sanitized_nice_name = self.nice_name.replace(" ", "_")
-        driver_name_kwargs = {"ln": f"{self.driver_prefix}_{sanitized_nice_name}",
+        self.sanitized_nice_name = self.nice_name.replace(" ", "_")
+        self.driver_attr_str = f"{self.driver_prefix}_{self.sanitized_nice_name}"
+        driver_name_kwargs = {"ln": self.driver_attr_str,
                               "nn": f"{self.driver_prefix}_{self.nice_name}",
                               "sn": f"{self.driver_prefix}_{self.short_name}"}
-        pm.addAttr("DRIVER", **driver_name_kwargs, proxy=f"{self.main_object}.{self.attr_name}")
+        self.driver_attr = pm.addAttr("DRIVER", **driver_name_kwargs, proxy=f"{self.main_object}.{self.attr_name}")
 
+        return None
 
 class CtrlSet:
-    def __init__(self, ctl_name="", offset=False, spaceswitch=False, ctl_shape="", shape_size=1, parent=None):
+    def __init__(self,
+                 ctl_name="",
+                 offset=False,
+                 spaceswitch=False,
+                 ctl_shape="",
+                 shape_size:int or list=1,
+                 transform_shape=[0, 0, 0],
+                 parent=None):
         self.ctl_name = ctl_name
         self.spaceswitch = spaceswitch
         self.offset = offset
         self.ctl_shape = ctl_shape
-        self.shape_size = shape_size
+        self.shape_size = shape_size if isinstance(shape_size, list) else [shape_size, shape_size, shape_size]
+        self.transform_shape = transform_shape
         self.parent = parent
 
         self.main_grp = None
@@ -181,6 +349,13 @@ class CtrlSet:
             (-0.5, -0.5, .5),
             (.5, -0.5, .5),
         ]
+        self.square = [
+            [1, 0, 1],
+            [1, 0, -1],
+            [-1, 0, -1],
+            [-1, 0, 1],
+            [1, 0, 1]
+        ]
 
         self.square_with_point = [
             (-1, 0, 1),
@@ -193,18 +368,32 @@ class CtrlSet:
             (-1, 0, 1),
 
         ]
+        self.star = [
+            (.2, .2, 0),
+            (0, 1, 0),
+            (-.2, .2, 0),
+            (-1, 0, 0),
+            (-.2, -.2, 0),
+            (0, -1, 0),
+            (.2, -.2, 0),
+            (1, 0, 0),
+            # (.2, .2, 0),
 
-    def scale_shape_list(self, shape_list):
-        """
+        ]
 
-        :param shape_list:
-        :return:
+    def transform_shape_list(self, shape_list):
         """
-        return [[x * self.shape_size, y * self.shape_size, z * self.shape_size] for x, y, z in shape_list]
+        # TODO AFOX description
+        :param shape_list: list of XYZ arrays to make a nurbs curve shape
+        :return: list of modified XYZ arrays
+        """
+        return [[x * self.shape_size[0] + self.transform_shape[0],
+                 y * self.shape_size[1] + self.transform_shape[1],
+                 z * self.shape_size[2] + self.transform_shape[2]] for x, y, z in shape_list]
 
     def create_ctl(self):
         """
-
+        # TODO AFOX description
         :return: None
         """
         obj_order = []
@@ -223,11 +412,17 @@ class CtrlSet:
         # Control stuff :3c
         ctl_kwargs = {}
         if not self.ctl_shape or self.ctl_shape == "box":
-            ctl_kwargs = {"degree": 1, "point": self.scale_shape_list(shape_list=self.box)}
+            ctl_kwargs = {"degree": 1, "point": self.transform_shape_list(shape_list=self.box)}
         if self.ctl_shape == "square_with_point":
-            ctl_kwargs = {"degree": 1, "point": self.scale_shape_list(shape_list=self.square_with_point)}
+            ctl_kwargs = {"degree": 1, "point": self.transform_shape_list(shape_list=self.square_with_point)}
+        if self.ctl_shape == "square":
+            ctl_kwargs = {"degree": 1, "point": self.transform_shape_list(shape_list=self.square)}
+        if self.ctl_shape == "star":
+            ctl_kwargs = {"degree": 3, "point": self.transform_shape_list(shape_list=self.star)}
 
         self.ctl = pm.curve(n=f'{self.ctl_name}_{self.ctl_suffix}', **ctl_kwargs)
+        if self.ctl_shape == "star":
+            pm.closeCurve(self.ctl, preserveShape=0, replaceOriginal=True)
         obj_order.append(self.ctl)
 
         for index, obj in enumerate(obj_order):
@@ -240,11 +435,13 @@ class CtrlSet:
 
         pm.select(d=True)
 
+        print(f"{time.perf_counter()}: Created controller set {self.ctl_name} with objects {obj_order}")
+
         return None
 
     def space_switch(self):
         """
-
+        # TODO AFOX description
         :return:
         """
 
@@ -317,28 +514,6 @@ class Rig:
 
         return None
 
-    # def duplicate_skin_skel_to_drv(self):
-    #     """
-    #
-    #     :return:
-    #     """
-    #     # TODO AFOX
-    #     top_joint = get_top_joint(joints=self.skin_skeleton)
-    #     dup_top_joint = pm.duplicate(top_joint)
-    #
-    #     return None
-    #
-    # def connect_drv_to_skin(self):
-    #     """
-    #
-    #     :return:
-    #     """
-    #     # TODO AFOX
-    #     if not self.drv_skeleton or not self.skin_skeleton:
-    #         return None
-    #
-    #     return None
-
     def extract_ctls(self):
         """
         Takes the currently selected controls and duplicates them to a seperate group to use for rebuilding the rig
@@ -364,222 +539,347 @@ class Rig:
 
         return extracted_ctls
 
-
 class Limb:
     def __init__(self):
         self.limb_name = ""
-        self.parent = None
-        self.limb_rig_setup_grp = ""
-        self.rig_ctls_grp = ""
-        self.components = None
+        self.rig_parent:pm.nt.Transform = None
+        self.ctl_parent:pm.nt.Transform = None
+
+        self.rig_setup_grp_name = None
+        self.rig_ctls_grp_name = None
+
+        self.rig_setup_grp = None
+        self.rig_ctls_grp = None
+
+        self.driver_object = None
+
+    def create_limb_setup(self):
+        """
+
+        :return:
+        """
+        if not self.rig_setup_grp:
+            self.rig_setup_grp = f"{self.limb_name}_rig_setup"
+        if pm.objExists(self.rig_setup_grp):
+            self.rig_setup_grp = pm.PyNode(self.rig_setup_grp)
+        else:
+            self.rig_setup_grp = pm.group(name=self.rig_setup_grp, empty=True)
+
+        pm.parent(self.rig_setup_grp, self.rig_parent)
+
+        if not self.rig_ctls_grp:
+            self.rig_ctls_grp = f"{self.limb_name}_ctls"
+        if pm.objExists(self.rig_ctls_grp):
+            self.rig_ctls_grp = pm.PyNode(self.rig_ctls_grp)
+        else:
+            self.rig_ctls_grp = pm.group(name=self.rig_ctls_grp, empty=True)
+
+        pm.parent(self.rig_ctls_grp, self.ctl_parent)
+
+        return None
 
 
 class ThreeBoneLimb(Limb):
-    def __init__(self):
+    def __init__(self,
+                 input_joints:list=None,
+                 # fkik:bool=True,  # assuming fkik is true tbh, who doesn't want fkik at the least :3
+                 stretch:bool=True,
+                 stretch_modifiers:bool=True,
+                 pole_lock:bool=True,
+                 bend_setup:bool=True,
+                 ikfk_suffix_replace:str="_drv",
+                 ik_ctl:pm.nt.Transform=None,
+                 ik_pv_ctl:pm.nt.Transform=None,
+                 fk_ctls:list=None,
+                 driver_ctl:pm.nt.Transform=None,):
         Limb.__init__(self)
-        self.driven_joints = []
 
+        # TODO AFOX pole vec pin joints
+        # TODO AFOX noroll upper joint
 
+        self.input_joints = input_joints
+        # self.fkik = fkik
+        self.stretch = stretch
+        self.stretch_modifiers = stretch_modifiers
+        self.pole_lock = pole_lock
+        self.bend_setup = bend_setup
+        self.ikfk_suffix_replace = ikfk_suffix_replace
+        self.ik_ctl = ik_ctl
+        self.ik_pv_ctl = ik_pv_ctl
+        self.fk_ctls = fk_ctls
+        self.driver_ctl = driver_ctl
 
+        self.ik_joints = None
+        self.fk_joints = None
+        self.skin_joints = None
 
-class RigCreator:
-    def __init__(self, main_grp_name=""):
-        super().__init__()
-        self.main_grp = main_grp_name
-        self.rig_setup_grp = "rig_setup"
-        self.ctls_grp = "ctrls"
-
-        self.extracted_controller_grp = "ctls_extracted"
-        self.extracted_control_suffix = "ctl_extracted"
-
-        self.grp = "grp"
-        self.ctl = "ctl"
-        self.loc = "loc"
-        self.ctl_grps = []
-
-    def create_nurbs_cube(self, name=""):
-        ctl = pm.curve(d=1,
-                       p=[(-0.5, -0.5, .5), (-0.5, .5, .5), (.5, .5, .5), (.5, -0.5, .5),
-                          (.5, -0.5, -0.5), (.5, .5, -0.5), (-0.5, .5, -0.5), (-0.5, -0.5, -0.5),
-                          (.5, -0.5, -0.5), (.5, .5, -0.5), (.5, .5, .5), (-0.5, .5, .5),
-                          (-0.5, .5, -0.5), (-0.5, -0.5, -0.5), (-0.5, -0.5, .5), (.5, -0.5, .5)],
-                       n=f'{name}_ctl')
-        return ctl
-
-
-    def base_ctrls_create(self, joint_set=list):
+    def create_three_bone_limb(self):
         """
-
-        :param joint_set: list of multiple pm.nt.Joint types to create a cube nurbs curve for
-        :return:
+        Creates a basic three joint limb, with FKIK, and options for stretch
+        :return: None
         """
+        self.fk_joints = pm.duplicate(self.input_joints, parentOnly=True)
+        for i in self.fk_joints:
+            i.rename(i.replace(self.ikfk_suffix_replace, "_fk"))
+        self.fk_joints[0].rename(self.fk_joints[0][:-1])
+        self.ik_joints = pm.duplicate(self.input_joints, parentOnly=True)
+        for i in self.ik_joints:
+            i.rename(i.replace(self.ikfk_suffix_replace, "_ik"))
+        self.ik_joints[0].rename(self.ik_joints[0][:-1])
+        self.skin_joints = pm.duplicate(self.input_joints, parentOnly=True)
+        for i in self.skin_joints:
+            i.rename(i.replace(self.ikfk_suffix_replace, "_skin"))
+        self.skin_joints[0].rename(self.skin_joints[0][:-1])
 
-        self.ensure_setup_is_correct()
+        # No Roll upper joint. Orient constrained to upper skin joint on Y and Z.
+        noroll_upper_joint = pm.duplicate(self.input_joints[0], parentOnly=True)[0]
+        noroll_upper_joint.rename(noroll_upper_joint.replace(self.ikfk_suffix_replace, "_noroll"))
+        noroll_upper_joint.rename(noroll_upper_joint[:-1])
+        pm.orientConstraint(self.skin_joints[0], noroll_upper_joint, skip="x")
 
-        for jnt in joint_set:
-            jnt_parent = jnt.getParent() if jnt.getParent().exists() else None
-            parent_ctl = f"{jnt_parent}_{self.grp}"
-            parent_grp = f"{jnt_parent}_{self.grp}"
-            grp = pm.group(name=f"{jnt}_{self.grp}", empty=True)
-            if pm.objExists(f"{jnt}_{self.extracted_control_suffix}"):
-                ctl = pm.duplicate(f"{jnt}_{self.extracted_control_suffix}", name=f"{jnt}_{self.grp}")
-            else:
-                ctl = self.create_nurbs_cube(name=jnt)
-                ctl.getShape().overrideRGBColors.set(1)
-                if "_l_" in ctl.name():
-                    pm.color(ctl.getShape(), rgb=blue)
-                elif "_r_" in ctl.name():
-                    pm.color(ctl.getShape(), rgb=red)
-                else:
-                    pm.color(ctl.getShape(), rgb=yellow)
+        # Parenting to the rig's group
+        pm.parent(self.fk_joints[0], self.rig_setup_grp)
+        pm.parent(self.ik_joints[0], self.rig_setup_grp)
+        pm.parent(self.skin_joints[0], self.rig_setup_grp)
+        pm.parent(noroll_upper_joint, self.rig_setup_grp)
 
-            pm.parent(ctl, grp)
-            pm.xform(grp, matrix=pm.xform(jnt, q=True, matrix=True, ws=True), ws=True)
-            if pm.objExists(f"{jnt_parent}_{self.grp}"):
-                pm.parent(grp, parent_ctl)
+        # IK setup and constraint to ik control
+        ik_handle = pm.ikHandle(name=f"{self.limb_name}_ikh", startJoint=self.ik_joints[0], endEffector=self.ik_joints[2])
+        pm.parent(ik_handle[0], self.rig_setup_grp)
+        pm.parentConstraint(self.ik_ctl, ik_handle[0], maintainOffset=False)
+
+        pm.orientConstraint(self.ik_ctl, self.ik_joints[2], maintainOffset=False)
+
+        # FK control constraints
+        pm.parentConstraint(self.fk_ctls[0], self.fk_joints[0], maintainOffset=False)
+        pm.parentConstraint(self.fk_ctls[1], self.fk_joints[1], maintainOffset=False)
+        pm.parentConstraint(self.fk_ctls[2], self.fk_joints[2], maintainOffset=False)
+
+        # Attribute creation
+        limb_fkik = Attr(main_object=self.driver_ctl,
+                         attr_name="fkik", nice_name="FKIK",
+                         driver_prefix=f"{self.limb_name}",
+                         float_min=0, float_max=1,)
+        limb_fkik.create_attr()
+
+        fkik_quat_setup(name=self.limb_name,
+                        input_obj_a=self.ik_joints[0],
+                        input_obj_b=self.fk_joints[0],
+                        output_obj=self.skin_joints[0],
+                        slerp_t_obj=pm.PyNode(self.driver_object),
+                        slerp_t_attr_str=limb_fkik.driver_attr_str)
+        fkik_quat_setup(name=self.limb_name,
+                        input_obj_a=self.ik_joints[1],
+                        input_obj_b=self.fk_joints[1],
+                        output_obj=self.skin_joints[1],
+                        slerp_t_obj=pm.PyNode(self.driver_object),
+                        slerp_t_attr_str=limb_fkik.driver_attr_str)
+        fkik_quat_setup(name=self.limb_name,
+                        input_obj_a=self.ik_joints[2],
+                        input_obj_b=self.fk_joints[2],
+                        output_obj=self.skin_joints[2],
+                        slerp_t_obj=pm.PyNode(self.driver_object),
+                        slerp_t_attr_str=limb_fkik.driver_attr_str)
+
+        # Attribute linking
+        # limb_fkik.driver_attr >>
+
+        if self.stretch:
+            stretch_grp = pm.group(name=f"{self.limb_name}_stretch_grp", empty=True)
+            pm.parent(stretch_grp, self.rig_setup_grp)
+
+            length_crv = pm.curve(name=f"{self.limb_name}_stretch_len_crv", p=[[1, 0, 0], [-1, 0, 0]], d=1)
+            cluster_a = pm.cluster(length_crv.cv[0], name=f"{self.limb_name}_cluster_top")
+            cluster_b = pm.cluster(length_crv.cv[1], name=f"{self.limb_name}_cluster_bottom")
+            pm.parent(length_crv, stretch_grp)
+            pm.parent(cluster_a, stretch_grp)
+            pm.parent(cluster_b, stretch_grp)
+
+            pm.parentConstraint(noroll_upper_joint, cluster_a, maintainOffset=False)
+            pm.parentConstraint(self.ik_ctl, cluster_b, maintainOffset=False)
+
+            arclength = pm.arclen(length_crv, ch=True)
+
+            # SETTING CONSTANTS FOR UPPER > LOWER TX LENGTH AND LOWER > HAND/FOOT TX LENGTH
+            upper_to_lower_const = pm.createNode("floatConstant", name=f"{self.limb_name.upper()}_UL_CONST")
+            upper_to_lower_const.inFloat.set(self.ik_joints[1].tx.get())
+            lower_to_hand_const  = pm.createNode("floatConstant", name=f"{self.limb_name.upper()}_LH_CONST")
+            lower_to_hand_const.inFloat.set(self.ik_joints[2].tx.get())
+
+            if self.stretch_modifiers:
+                pass
+
+        if self.pole_lock:
+            pass
+
+        if self.bend_setup:
+            pass
 
         return None
 
 
-
-    def fkik_setup(self, input_joints=[pm.nt.Joint, pm.nt.Joint, pm.nt.Joint], slerp_t_obj=pm.nt.Transform, slerp_t_attr=""):
-        fk_joint_chain = pm.duplicate(input_joints, parentOnly=True, name="fk_joints_temp")
-        ik_joint_chain = pm.duplicate(input_joints, parentOnly=True, name="ik_joints_temp")
-        skin_joint_chain = pm.duplicate(input_joints, parentOnly=True, name="skin_joints_temp")
-
-        for index, jnt in enumerate(input_joints):
-            fk_jnt = fk_joint_chain[index]
-            ik_jnt = ik_joint_chain[index]
-            skin_jnt = skin_joint_chain[index]
-            fk_jnt.rename(jnt.name().replace("_jnt", "_fk_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_fk_jnt")
-            ik_jnt.rename(jnt.name().replace("_jnt", "_ik_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_ik_jnt")
-            skin_jnt.rename(jnt.name().replace("_jnt", "_skin_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_skin_jnt")
-
-        for jnt in input_joints:
-            fk_jnt = pm.PyNode(jnt.name().replace("_jnt", "_fk_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_fk_jnt")
-            ik_jnt = pm.PyNode(jnt.name().replace("_jnt", "_ik_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_ik_jnt")
-            skin_jnt = pm.PyNode(jnt.name().replace("_jnt", "_skin_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_skin_jnt")
-            self.fkik_quat_setup(name=jnt,
-                                 input_obj_a=fk_jnt,
-                                 input_obj_b=ik_jnt,
-                                 output_obj=skin_jnt,
-                                 slerp_t_obj=slerp_t_obj,
-                                 slerp_t_attr=slerp_t_attr)
-
-        self.ik_setup(jnt_a=ik_joint_chain[0], jnt_b=ik_joint_chain[1], jnt_c=ik_joint_chain[2])
-
-        return fk_joint_chain, ik_joint_chain, skin_joint_chain
-
-    def ik_setup(self, jnt_a, jnt_b, jnt_c):
-        """
-
-        :param jnt_a: IK joint chain top joint
-        :param jnt_b: IK joint chain middle joint
-        :param jnt_c: IK joint chain bottom joint
-        :return:
-        """
-        loc_centre_jnt = pm.spaceLocator()
-        loc_pv = pm.spaceLocator()
-        pm.parent(loc_pv, loc_centre_jnt)
-
-        point_const = pm.pointConstraint(jnt_a, jnt_c, loc_centre_jnt, maintainOffset=False)
-        pm.delete(point_const)
-        aim_const = pm.aimConstraint(jnt_b, loc_centre_jnt, maintainOffset=False)
-        pm.delete(aim_const)
-
-        loc_pv.tx.set(20)
-
-        ik_handle = pm.ikHandle(startJoint=jnt_a, endEffector=jnt_c)
-        pv_const = pm.poleVectorConstraint(loc_pv, ik_handle[0])
-        return loc_centre_jnt, loc_pv, ik_handle, pv_const
-
-    def fkik_quat_setup(self, name="",
-                        input_obj_a=pm.nt.Transform,
-                        input_obj_b=pm.nt.Transform,
-                        output_obj=pm.nt.Transform,
-                        slerp_t_obj=pm.nt.Transform,
-                        slerp_t_attr=""):
-        """
-        :param name:
-        :param input_obj_a:
-        :param input_obj_b:
-        :param output_obj:
-        :param slerp_t_obj:
-        :param slerp_t_attr:
-        :return: Created nodes as pm.nt types, euler_to_quat_a, euler_to_quat_b, quat_slerp, quat_to_euler
-        """
-        if name:
-            name = f"{name}_"
-        euler_to_quat_a = pm.createNode("eulerToQuat", name=f"{name}eulerToQuat_a")
-        euler_to_quat_b = pm.createNode("eulerToQuat", name=f"{name}eulerToQuat_b")
-        quat_slerp = pm.createNode("quatSlerp", name=f"{name}quatSlerp")
-        quat_to_euler = pm.createNode("quatToEuler", name=f"{name}quatToEuler")
-
-        euler_to_quat_a.outputQuat >> quat_slerp.input1Quat
-        euler_to_quat_b.outputQuat >> quat_slerp.input2Quat
-
-        quat_slerp.outputQuat >> quat_to_euler.inputQuat
-
-        if input_obj_a:
-            input_obj_a.rotate >> euler_to_quat_a.inputRotate
-        if input_obj_b:
-            input_obj_b.rotate >> euler_to_quat_b.inputRotate
-        if output_obj:
-            quat_to_euler.outputRotate >> output_obj.rotate
-        if slerp_t_attr:
-            slerp_t_obj.attr(slerp_t_attr) >> quat_slerp.inputT
-
-        return euler_to_quat_a, euler_to_quat_b, quat_slerp, quat_to_euler
-
-    def bend_setup(self,
-                   name="",
-                   upper_joint=pm.nt.Joint,
-                   mid_joint=pm.nt.Joint,
-                   lower_joint=pm.nt.Joint,
-                   upper_mid_twist_joints=list,
-                   mid_lower_twist_joints=list):
-        """
-
-        :param upper_joint:
-        :param name:
-        :return:
-        """
-
-        self.ensure_setup_is_correct()
-
-        bend_setup_grp = pm.group(name=f"{name}_bend_setup_grp", empty=True)
-        pm.parent(bend_setup_grp, self.rig_setup_grp)
-
-        joint_count = 2 + len(upper_mid_twist_joints) + len(mid_lower_twist_joints)
-        pm.polyPlane()
-
-        return None
-
-    def mirror_control_shapes(self, controls=[]):
-
-        if not controls:
-            controls = pm.selected(type=pm.nt.Transform)
-
-        for control in controls:
-            if "_l_" in control.name():
-                mirror_control = pm.PyNode(control.name().replace("_l_", "_r_"))
-            else:
-                mirror_control = pm.PyNode(control.name().replace("_r_", "_l_"))
-            dup_control = pm.duplicate(control, rr=True)
-            pm.delete(mirror_control.getShape(), shape=True)
-            pm.parent(dup_control[0].getShape(), mirror_control, r=True, s=True)
-            pm.delete(dup_control)
-
-        return None
-
-    def copy_control_shapes(self, controls=[]):
-
-        if not controls:
-            controls = pm.selected(type=pm.nt.Transform)
-
-        dup_control = pm.duplicate(controls[0], rr=True)
-        pm.delete(controls[1].getShape(), shape=True)
-        pm.parent(dup_control[0].getShape(), controls[1], r=True, s=True)
-        pm.delete(dup_control)
-
-        return None
+# class RigCreator:
+#     def __init__(self, main_grp_name=""):
+#         super().__init__()
+#         self.main_grp = main_grp_name
+#         self.rig_setup_grp = "rig_setup"
+#         self.ctls_grp = "ctrls"
+#
+#         self.extracted_controller_grp = "ctls_extracted"
+#         self.extracted_control_suffix = "ctl_extracted"
+#
+#         self.grp = "grp"
+#         self.ctl = "ctl"
+#         self.loc = "loc"
+#         self.ctl_grps = []
+#
+#     def create_nurbs_cube(self, name=""):
+#         ctl = pm.curve(d=1,
+#                        p=[(-0.5, -0.5, .5), (-0.5, .5, .5), (.5, .5, .5), (.5, -0.5, .5),
+#                           (.5, -0.5, -0.5), (.5, .5, -0.5), (-0.5, .5, -0.5), (-0.5, -0.5, -0.5),
+#                           (.5, -0.5, -0.5), (.5, .5, -0.5), (.5, .5, .5), (-0.5, .5, .5),
+#                           (-0.5, .5, -0.5), (-0.5, -0.5, -0.5), (-0.5, -0.5, .5), (.5, -0.5, .5)],
+#                        n=f'{name}_ctl')
+#         return ctl
+#
+#
+#     def base_ctrls_create(self, joint_set=list):
+#         """
+#
+#         :param joint_set: list of multiple pm.nt.Joint types to create a cube nurbs curve for
+#         :return:
+#         """
+#
+#         self.ensure_setup_is_correct()
+#
+#         for jnt in joint_set:
+#             jnt_parent = jnt.getParent() if jnt.getParent().exists() else None
+#             parent_ctl = f"{jnt_parent}_{self.grp}"
+#             parent_grp = f"{jnt_parent}_{self.grp}"
+#             grp = pm.group(name=f"{jnt}_{self.grp}", empty=True)
+#             if pm.objExists(f"{jnt}_{self.extracted_control_suffix}"):
+#                 ctl = pm.duplicate(f"{jnt}_{self.extracted_control_suffix}", name=f"{jnt}_{self.grp}")
+#             else:
+#                 ctl = self.create_nurbs_cube(name=jnt)
+#                 ctl.getShape().overrideRGBColors.set(1)
+#                 if "_l_" in ctl.name():
+#                     pm.color(ctl.getShape(), rgb=blue)
+#                 elif "_r_" in ctl.name():
+#                     pm.color(ctl.getShape(), rgb=red)
+#                 else:
+#                     pm.color(ctl.getShape(), rgb=yellow)
+#
+#             pm.parent(ctl, grp)
+#             pm.xform(grp, matrix=pm.xform(jnt, q=True, matrix=True, ws=True), ws=True)
+#             if pm.objExists(f"{jnt_parent}_{self.grp}"):
+#                 pm.parent(grp, parent_ctl)
+#
+#         return None
+#
+#
+#
+#     def fkik_setup(self, input_joints=[pm.nt.Joint, pm.nt.Joint, pm.nt.Joint], slerp_t_obj=pm.nt.Transform, slerp_t_attr=""):
+#         fk_joint_chain = pm.duplicate(input_joints, parentOnly=True, name="fk_joints_temp")
+#         ik_joint_chain = pm.duplicate(input_joints, parentOnly=True, name="ik_joints_temp")
+#         skin_joint_chain = pm.duplicate(input_joints, parentOnly=True, name="skin_joints_temp")
+#
+#         for index, jnt in enumerate(input_joints):
+#             fk_jnt = fk_joint_chain[index]
+#             ik_jnt = ik_joint_chain[index]
+#             skin_jnt = skin_joint_chain[index]
+#             fk_jnt.rename(jnt.name().replace("_jnt", "_fk_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_fk_jnt")
+#             ik_jnt.rename(jnt.name().replace("_jnt", "_ik_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_ik_jnt")
+#             skin_jnt.rename(jnt.name().replace("_jnt", "_skin_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_skin_jnt")
+#
+#         for jnt in input_joints:
+#             fk_jnt = pm.PyNode(jnt.name().replace("_jnt", "_fk_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_fk_jnt")
+#             ik_jnt = pm.PyNode(jnt.name().replace("_jnt", "_ik_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_ik_jnt")
+#             skin_jnt = pm.PyNode(jnt.name().replace("_jnt", "_skin_jnt") if "jnt" in jnt.name() else f"{jnt.name()}_skin_jnt")
+#             self.fkik_quat_setup(name=jnt,
+#                                  input_obj_a=fk_jnt,
+#                                  input_obj_b=ik_jnt,
+#                                  output_obj=skin_jnt,
+#                                  slerp_t_obj=slerp_t_obj,
+#                                  slerp_t_attr=slerp_t_attr)
+#
+#         self.ik_setup(jnt_a=ik_joint_chain[0], jnt_b=ik_joint_chain[1], jnt_c=ik_joint_chain[2])
+#
+#         return fk_joint_chain, ik_joint_chain, skin_joint_chain
+#
+#     def ik_setup(self, jnt_a, jnt_b, jnt_c):
+#         """
+#
+#         :param jnt_a: IK joint chain top joint
+#         :param jnt_b: IK joint chain middle joint
+#         :param jnt_c: IK joint chain bottom joint
+#         :return:
+#         """
+#         loc_centre_jnt = pm.spaceLocator()
+#         loc_pv = pm.spaceLocator()
+#         pm.parent(loc_pv, loc_centre_jnt)
+#
+#         point_const = pm.pointConstraint(jnt_a, jnt_c, loc_centre_jnt, maintainOffset=False)
+#         pm.delete(point_const)
+#         aim_const = pm.aimConstraint(jnt_b, loc_centre_jnt, maintainOffset=False)
+#         pm.delete(aim_const)
+#
+#         loc_pv.tx.set(20)
+#
+#         ik_handle = pm.ikHandle(startJoint=jnt_a, endEffector=jnt_c)
+#         pv_const = pm.poleVectorConstraint(loc_pv, ik_handle[0])
+#         return loc_centre_jnt, loc_pv, ik_handle, pv_const
+#
+#
+#
+#     def bend_setup(self,
+#                    name="",
+#                    upper_joint=pm.nt.Joint,
+#                    mid_joint=pm.nt.Joint,
+#                    lower_joint=pm.nt.Joint,
+#                    upper_mid_twist_joints=list,
+#                    mid_lower_twist_joints=list):
+#         """
+#
+#         :param upper_joint:
+#         :param name:
+#         :return:
+#         """
+#
+#         self.ensure_setup_is_correct()
+#
+#         bend_setup_grp = pm.group(name=f"{name}_bend_setup_grp", empty=True)
+#         pm.parent(bend_setup_grp, self.rig_setup_grp)
+#
+#         joint_count = 2 + len(upper_mid_twist_joints) + len(mid_lower_twist_joints)
+#         pm.polyPlane()
+#
+#         return None
+#
+#     def mirror_control_shapes(self, controls=[]):
+#
+#         if not controls:
+#             controls = pm.selected(type=pm.nt.Transform)
+#
+#         for control in controls:
+#             if "_l_" in control.name():
+#                 mirror_control = pm.PyNode(control.name().replace("_l_", "_r_"))
+#             else:
+#                 mirror_control = pm.PyNode(control.name().replace("_r_", "_l_"))
+#             dup_control = pm.duplicate(control, rr=True)
+#             pm.delete(mirror_control.getShape(), shape=True)
+#             pm.parent(dup_control[0].getShape(), mirror_control, r=True, s=True)
+#             pm.delete(dup_control)
+#
+#         return None
+#
+#     def copy_control_shapes(self, controls=[]):
+#
+#         if not controls:
+#             controls = pm.selected(type=pm.nt.Transform)
+#
+#         dup_control = pm.duplicate(controls[0], rr=True)
+#         pm.delete(controls[1].getShape(), shape=True)
+#         pm.parent(dup_control[0].getShape(), controls[1], r=True, s=True)
+#         pm.delete(dup_control)
+#
+#         return None
