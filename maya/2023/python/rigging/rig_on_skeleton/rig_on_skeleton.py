@@ -12,121 +12,18 @@ from pymel.core import nt
 # LOCAL APPLICATION IMPORTS
 
 
-# EXAMPLE CODE
-"""
-import pymel.core as pm
-from rigging import rig_on_skeleton as ros
-from importlib import reload
-reload(ros)
-
-# FIRST SETUP #
-rig = ros.Rig()
-rig.main_grp = "metahuman"
-rig.ensure_setup_is_correct()
-
-driver = "DRIVER"
-
-# ROOT CONTROLS #
-global_ctl = ros.CtrlSet(ctl_name="global", ctl_shape="square_with_point", shape_size=25, parent=rig.ctls_grp)
-global_ctl.create_ctl()
-
-global_off_ctl = ros.CtrlSet(ctl_name="global_off", ctl_shape="square", shape_size=20, parent=global_ctl.ctl)
-global_off_ctl.create_ctl()
-
-root_ctl = ros.CtrlSet(ctl_name="root", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, parent=rig.ctls_grp)
-root_ctl.create_ctl()
-
-# HIP CONTROLS #
-hip_ctl = ros.CtrlSet(ctl_name="hip", ctl_shape="box", offset=True, spaceswitch=True, shape_size=[40, 10, 30], parent=global_off_ctl.ctl)
-hip_ctl.create_ctl()
-pm.xform(hip_ctl.main_grp, translation=pm.xform("pelvis_drv", translation=True, query=True, worldSpace=True), worldSpace=True)
-
-
-# constraints #
-pm.parentConstraint(root_ctl.ctl, "root_drv", maintainOffset=True)
-pm.parentConstraint(hip_ctl.ctl, "pelvis_drv", maintainOffset=True)
-
-# L HAND SETUP
-arm_l = ros.ThreeBoneLimb()
-arm_l.limb_name = "arm_l"
-arm_l.input_joints = ["upperarm_l_drv", "lowerarm_l_drv", "hand_l_drv"]
-arm_l.ikfk_suffix_replace = "_drv"
-arm_l.driver_object = driver
-arm_l.rig_parent = rig.rig_setup_grp
-arm_l.ctl_parent = rig.ctls_grp
-arm_l.create_limb_setup()
-# CONTROLS # 
-# driver
-hand_l_drv_ctl = ros.CtrlSet(ctl_name="hand_l_driver", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, transform_shape=[5,-5,0], parent=arm_l.rig_ctls_grp)
-hand_l_drv_ctl.create_ctl()
-pm.xform(hand_l_drv_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-# ik
-hand_l_ik_ctl = ros.CtrlSet(ctl_name="hand_l_ik", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_l.rig_ctls_grp)
-hand_l_ik_ctl.create_ctl()
-pm.xform(hand_l_ik_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-#upperarm_l_fk
-upperarm_l_fk_ctl = ros.CtrlSet(ctl_name="upperarm_l_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_l.rig_ctls_grp)
-upperarm_l_fk_ctl.create_ctl()
-pm.xform(upperarm_l_fk_ctl.main_grp, matrix=pm.xform("upperarm_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-#lowerarm_l_fk
-lowerarm_l_fk_ctl = ros.CtrlSet(ctl_name="lowerarm_l_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=upperarm_l_fk_ctl.ctl)
-lowerarm_l_fk_ctl.create_ctl()
-pm.xform(lowerarm_l_fk_ctl.main_grp, matrix=pm.xform("lowerarm_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-#hand_l_fk
-hand_l_fk_ctl = ros.CtrlSet(ctl_name="hand_l_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=5, parent=lowerarm_l_fk_ctl.ctl)
-hand_l_fk_ctl.create_ctl()
-pm.xform(hand_l_fk_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-
-arm_l.ik_ctl = hand_l_ik_ctl.ctl
-arm_l.fk_ctls = [upperarm_l_fk_ctl.ctl, lowerarm_l_fk_ctl.ctl, hand_l_fk_ctl.ctl]
-arm_l.driver_ctl = hand_l_drv_ctl.ctl
-arm_l.create_three_bone_limb()
-
-
-# R HAND SETUP
-arm_r = ros.ThreeBoneLimb()
-arm_r.limb_name = "arm_r"
-arm_r.input_joints = ["upperarm_r_drv", "lowerarm_r_drv", "hand_r_drv"]
-arm_r.ikfk_suffix_replace = "_drv"
-arm_r.driver_object = driver
-arm_r.rig_parent = rig.rig_setup_grp
-arm_r.ctl_parent = rig.ctls_grp
-arm_r.create_limb_setup()
-# CONTROLS # 
-# driver
-hand_r_drv_ctl = ros.CtrlSet(ctl_name="hand_r_driver", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, transform_shape=[-5,5,0], parent=arm_r.rig_ctls_grp)
-hand_r_drv_ctl.create_ctl()
-pm.xform(hand_r_drv_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-# ik
-hand_r_ik_ctl = ros.CtrlSet(ctl_name="hand_r_ik", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp)
-hand_r_ik_ctl.create_ctl()
-pm.xform(hand_r_ik_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-#upperarm_l_fk
-upperarm_r_fk_ctl = ros.CtrlSet(ctl_name="upperarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp)
-upperarm_r_fk_ctl.create_ctl()
-pm.xform(upperarm_r_fk_ctl.main_grp, matrix=pm.xform("upperarm_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-#lowerarm_l_fk
-lowerarm_r_fk_ctl = ros.CtrlSet(ctl_name="lowerarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=upperarm_r_fk_ctl.ctl)
-lowerarm_r_fk_ctl.create_ctl()
-pm.xform(lowerarm_r_fk_ctl.main_grp, matrix=pm.xform("lowerarm_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-#hand_l_fk
-hand_r_fk_ctl = ros.CtrlSet(ctl_name="hand_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=5, parent=lowerarm_r_fk_ctl.ctl)
-hand_r_fk_ctl.create_ctl()
-pm.xform(hand_r_fk_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
-
-arm_r.ik_ctl = hand_r_ik_ctl.ctl
-arm_r.fk_ctls = [upperarm_r_fk_ctl.ctl, lowerarm_r_fk_ctl.ctl, hand_r_fk_ctl.ctl]
-arm_r.driver_ctl = hand_r_drv_ctl.ctl
-arm_r.create_three_bone_limb()
-
-"""
-
-
-blue = (.1, .1, 1)
+blue = (.05, .05, 1)
 red = (1, .1, .1)
 yellow = (.9, .9, .2)
+white = (1, 1, 1)
 
 driver_outliner_yellow = (1, .8, 0)
+
+
+right_col = red
+left_col = blue
+centre_col = yellow
+driver_col = white
 
 
 def get_top_joint(joints:list):
@@ -309,27 +206,33 @@ class CtrlSet:
                  ctl_name="",
                  offset=False,
                  spaceswitch=False,
+                 mirror=False,
                  ctl_shape="",
                  shape_size:int or list=1,
                  transform_shape=[0, 0, 0],
+                 colour=None,
                  parent=None):
         self.ctl_name = ctl_name
-        self.spaceswitch = spaceswitch
         self.offset = offset
+        self.spaceswitch = spaceswitch
+        self.mirror = mirror
         self.ctl_shape = ctl_shape
         self.shape_size = shape_size if isinstance(shape_size, list) else [shape_size, shape_size, shape_size]
         self.transform_shape = transform_shape
+        self.colour = colour
         self.parent = parent
 
         self.main_grp = None
         self.ctl = None
         self.offset_grp = None
         self.spaceswitch_grp = None
+        self.mirror_grp = None
 
         self.grp_suffix = "grp"
         self.ctl_suffix = "ctl"
         self.off_grp_suffix = "off_grp"
         self.spaceswitch_grp_suffix = "spaceswitch_grp"
+        self.mirror_grp_suffix = "mirror_grp"
 
         self.box = [
             (-0.5, -0.5, .5),
@@ -398,6 +301,10 @@ class CtrlSet:
         """
         obj_order = []
 
+        if self.mirror:
+            self.mirror_grp = pm.group(name=f"{self.ctl_name}_{self.mirror_grp_suffix}", empty=True)
+            obj_order.append(self.mirror_grp)
+
         self.main_grp = pm.group(name=f"{self.ctl_name}_{self.grp_suffix}", empty=True)
         obj_order.append(self.main_grp)
 
@@ -425,13 +332,18 @@ class CtrlSet:
             pm.closeCurve(self.ctl, preserveShape=0, replaceOriginal=True)
         obj_order.append(self.ctl)
 
+        if self.colour:
+            self.ctl.overrideEnabled.set(1)
+            self.ctl.overrideRGBColors.set(1)
+            self.ctl.overrideColorRGB.set(self.colour)
+
         for index, obj in enumerate(obj_order):
             if index == 0:
                 continue
             pm.parent(obj, obj_order[index-1])
 
         if self.parent:
-            pm.parent(self.main_grp, self.parent)
+            pm.parent(self.main_grp if not self.mirror_grp else self.mirror_grp, self.parent)
 
         pm.select(d=True)
 
@@ -439,13 +351,23 @@ class CtrlSet:
 
         return None
 
-    def space_switch(self):
+    def set_up_space_switch(self):
         """
         # TODO AFOX description
         :return:
         """
 
         return None
+
+    def do_mirror(self):
+        """
+
+        :return:
+        """
+        if not self.mirror:
+            print("No mirror object for specified control set, skipping :)")
+        else:
+            self.mirror_grp.sx.set(-1)
 
 class Rig:
     def __init__(self):
@@ -550,6 +472,7 @@ class Limb:
 
         self.rig_setup_grp = None
         self.rig_ctls_grp = None
+        self.rig_upper_obj = None
 
         self.driver_object = None
 
@@ -591,7 +514,8 @@ class ThreeBoneLimb(Limb):
                  ik_ctl:pm.nt.Transform=None,
                  ik_pv_ctl:pm.nt.Transform=None,
                  fk_ctls:list=None,
-                 driver_ctl:pm.nt.Transform=None,):
+                 driver_ctl:pm.nt.Transform=None,
+                 elbow_ctl:pm.nt.Transform=None,):
         Limb.__init__(self)
 
         # TODO AFOX pole vec pin joints
@@ -608,16 +532,23 @@ class ThreeBoneLimb(Limb):
         self.ik_pv_ctl = ik_pv_ctl
         self.fk_ctls = fk_ctls
         self.driver_ctl = driver_ctl
+        self.elbow_ctl = elbow_ctl
 
         self.ik_joints = None
         self.fk_joints = None
         self.skin_joints = None
+
+        self.pole_pin_upper_jnt = None
+        self.pole_pin_lower_jnt = None
 
     def create_three_bone_limb(self):
         """
         Creates a basic three joint limb, with FKIK, and options for stretch
         :return: None
         """
+
+        self.rig_upper_obj = self.rig_upper_obj if self.rig_upper_obj else self.ctl_parent
+
         self.fk_joints = pm.duplicate(self.input_joints, parentOnly=True)
         for i in self.fk_joints:
             i.rename(i.replace(self.ikfk_suffix_replace, "_fk"))
@@ -646,40 +577,63 @@ class ThreeBoneLimb(Limb):
         # IK setup and constraint to ik control
         ik_handle = pm.ikHandle(name=f"{self.limb_name}_ikh", startJoint=self.ik_joints[0], endEffector=self.ik_joints[2])
         pm.parent(ik_handle[0], self.rig_setup_grp)
-        pm.parentConstraint(self.ik_ctl, ik_handle[0], maintainOffset=False)
+        pm.parentConstraint(self.ik_ctl.ctl, ik_handle[0], maintainOffset=False)
+        pm.poleVectorConstraint(self.ik_pv_ctl.ctl, ik_handle[0])
 
-        pm.orientConstraint(self.ik_ctl, self.ik_joints[2], maintainOffset=False)
+        pm.orientConstraint(self.ik_ctl.ctl, self.ik_joints[2], maintainOffset=False)
+
+        # upper object constraints
+        pm.parentConstraint(self.rig_upper_obj, self.ik_joints[0], maintainOffset=True)
+        ik_fk_skin_point_const = pm.pointConstraint(self.fk_joints[0], self.ik_joints[0], self.skin_joints[0])
+        pm.parentConstraint(self.rig_upper_obj, noroll_upper_joint, skipRotate=["x", "y", "z"], maintainOffset=True)
 
         # FK control constraints
-        pm.parentConstraint(self.fk_ctls[0], self.fk_joints[0], maintainOffset=False)
-        pm.parentConstraint(self.fk_ctls[1], self.fk_joints[1], maintainOffset=False)
-        pm.parentConstraint(self.fk_ctls[2], self.fk_joints[2], maintainOffset=False)
+        pm.parentConstraint(self.fk_ctls[0].ctl, self.fk_joints[0], maintainOffset=False)
+        pm.parentConstraint(self.fk_ctls[1].ctl, self.fk_joints[1], maintainOffset=False)
+        pm.parentConstraint(self.fk_ctls[2].ctl, self.fk_joints[2], maintainOffset=False)
 
         # Attribute creation
+        limb_ik_controls_attr = Attr(main_object=self.driver_ctl,
+                                     attr_name="ik_controls",
+                                     nice_name="IK CONTROLS",
+                                     dummy_attr=True,
+                                     driver_prefix=self.limb_name)
         limb_fkik = Attr(main_object=self.driver_ctl,
-                         attr_name="fkik", nice_name="FKIK",
-                         driver_prefix=f"{self.limb_name}",
-                         float_min=0, float_max=1,)
+                         attr_name="fkik",
+                         nice_name="FKIK",
+                         driver_prefix=self.limb_name,
+                         float_min=0,
+                         float_max=1,)
         limb_fkik.create_attr()
+
+        fkik_rev = pm.createNode("floatMath", name=f"{self.limb_name}_fkik_rev_floatmath")
+        fkik_rev.operation.set(1)
+        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_ctl.main_grp.v)
+        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", fkik_rev.floatB)
+        pm.connectAttr(fkik_rev.outFloat, self.fk_ctls[0].main_grp.v)
+
+        # pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", f"{ik_fk_skin_point_const}.{self.fk_joints[0]}W0")
+        # pm.connectAttr(fkik_rev.outFloat, f"{ik_fk_skin_point_const}.{self.ik_joints[0]}W1")
+
 
         fkik_quat_setup(name=self.limb_name,
                         input_obj_a=self.ik_joints[0],
                         input_obj_b=self.fk_joints[0],
                         output_obj=self.skin_joints[0],
-                        slerp_t_obj=pm.PyNode(self.driver_object),
-                        slerp_t_attr_str=limb_fkik.driver_attr_str)
+                        slerp_t_obj=fkik_rev,
+                        slerp_t_attr_str="outFloat")
         fkik_quat_setup(name=self.limb_name,
                         input_obj_a=self.ik_joints[1],
                         input_obj_b=self.fk_joints[1],
                         output_obj=self.skin_joints[1],
-                        slerp_t_obj=pm.PyNode(self.driver_object),
-                        slerp_t_attr_str=limb_fkik.driver_attr_str)
+                        slerp_t_obj=fkik_rev,
+                        slerp_t_attr_str="outFloat")
         fkik_quat_setup(name=self.limb_name,
                         input_obj_a=self.ik_joints[2],
                         input_obj_b=self.fk_joints[2],
                         output_obj=self.skin_joints[2],
-                        slerp_t_obj=pm.PyNode(self.driver_object),
-                        slerp_t_attr_str=limb_fkik.driver_attr_str)
+                        slerp_t_obj=fkik_rev,
+                        slerp_t_attr_str="outFloat")
 
         # Attribute linking
         # limb_fkik.driver_attr >>
@@ -696,7 +650,7 @@ class ThreeBoneLimb(Limb):
             pm.parent(cluster_b, stretch_grp)
 
             pm.parentConstraint(noroll_upper_joint, cluster_a, maintainOffset=False)
-            pm.parentConstraint(self.ik_ctl, cluster_b, maintainOffset=False)
+            pm.parentConstraint(self.ik_ctl.ctl, cluster_b, maintainOffset=False)
 
             arclength = pm.arclen(length_crv, ch=True)
 
@@ -710,7 +664,39 @@ class ThreeBoneLimb(Limb):
                 pass
 
         if self.pole_lock:
-            pass
+            # if not self.elbow_ctl:
+            #     raise Exception(f"No elbow ctl specified for {self.limb_name}")
+            # if not self.pole_vec_ctl:
+            #     raise Exception(f"No pole vector control specified for {self.limb_name}")
+
+            # Attribute creation
+            limb_pole_lock = Attr(main_object=self.driver_ctl,
+                             attr_name="pole_lock", nice_name="Pole Vec Lock",
+                             driver_prefix=f"{self.limb_name}",
+                             float_min=0, float_max=1, )
+            limb_pole_lock.create_attr()
+
+            self.pole_pin_upper_jnt = pm.duplicate(self.input_joints[0], parentOnly=True)[0]
+            self.pole_pin_upper_jnt.rename(self.pole_pin_upper_jnt.name()[:-1].replace(self.ikfk_suffix_replace, "_pin"))
+            pm.parent(self.pole_pin_upper_jnt, self.rig_setup_grp)
+            self.pole_pin_lower_jnt = pm.duplicate(self.input_joints[1], parentOnly=True)[0]
+            self.pole_pin_lower_jnt.rename(self.pole_pin_lower_jnt.name()[:-1].replace(self.ikfk_suffix_replace, "_pin"))
+            pm.parent(self.pole_pin_lower_jnt, self.rig_setup_grp)
+
+            upper_pin_point_const = pm.pointConstraint(self.ik_joints[0],
+                                                       self.pole_pin_upper_jnt,
+                                                       maintainOffset=False)
+            lower_pin_point_const = pm.pointConstraint([self.ik_joints[1], self.fk_joints[1]],
+                                                       self.pole_pin_lower_jnt,
+                                                       maintainOffset=False)
+            upper_pin_aim_const = pm.aimConstraint(self.elbow_ctl.ctl if self.elbow_ctl else self.ik_pv_ctl.ctl,
+                                                   self.pole_pin_upper_jnt,
+                                                   worldUpType='objectrotation',
+                                                   worldUpObject=self.skin_joints[0])
+            lower_pin_aim_const = pm.aimConstraint(self.ik_ctl.ctl,
+                                                   self.pole_pin_lower_jnt,
+                                                   worldUpType='objectrotation',
+                                                   worldUpObject=self.skin_joints[1])
 
         if self.bend_setup:
             pass
