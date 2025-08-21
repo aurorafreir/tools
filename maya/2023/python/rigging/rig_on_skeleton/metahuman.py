@@ -51,6 +51,33 @@ def run():
     pm.parentConstraint(hip_ctl.ctl, "pelvis_drv", maintainOffset=True)
 
 
+    # NECK AND HEAD
+    neck_01 = ros.CtrlSet(ctl_name="neck_01", ctl_shape="box", offset=True, spaceswitch=True,
+                         shape_size=[3, 12, 12], transform_shape=[3,0,0], parent=rig.ctls_grp, colour=ros.centre_col)
+    neck_01.create_ctl()
+    pm.xform(neck_01.main_grp, matrix=pm.xform("neck_01_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    neck_02 = ros.CtrlSet(ctl_name="neck_01", ctl_shape="box", offset=True, spaceswitch=True,
+                          shape_size=[3, 12, 12], parent=neck_01.ctl, colour=ros.centre_col)
+    neck_02.create_ctl()
+    pm.xform(neck_02.main_grp, matrix=pm.xform("neck_02_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+
+    head = ros.CtrlSet(ctl_name="head", ctl_shape="box", offset=True, spaceswitch=True,
+                        shape_size=[15,20,15], transform_shape=[3, -2, 0], parent=neck_02.ctl, colour=ros.centre_col)
+    head.create_ctl()
+    pm.xform(head.main_grp, matrix=pm.xform("head_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+
+    # NECK AND HEAD FINALISING
+    pm.parentConstraint(hip_ctl.ctl, neck_01.main_grp, maintainOffset=True)
+    pm.parentConstraint(neck_01.ctl, "neck_01_drv")
+    pm.parentConstraint(neck_02.ctl, "neck_02_drv")
+    pm.parentConstraint(head.ctl, "head_drv")
+
+    ros.lock_hide_default_attrs(neck_01.ctl, rotate=False)
+    ros.lock_hide_default_attrs(neck_02.ctl, rotate=False)
+    ros.lock_hide_default_attrs(head.ctl, rotate=False)
+
+
+
     # SHOULDERS
     scap_l = ros.CtrlSet(ctl_name="shoulder_l", ctl_shape="box", offset=True, spaceswitch=True,
                          shape_size=[15, 10, 20], transform_shape=[10,2,0], parent=rig.ctls_grp, colour=ros.left_col,
@@ -64,8 +91,12 @@ def run():
     pm.xform(scap_r.main_grp, t=pm.xform("clavicle_l_drv", t=True, query=True, worldSpace=True), worldSpace=True)
     scap_r.do_mirror()
 
+    # SHOULDERS FINALIZING
     pm.parentConstraint(scap_l.ctl, "clavicle_l_drv", maintainOffset=True)
     pm.parentConstraint(scap_r.ctl, "clavicle_r_drv", maintainOffset=True)
+
+    ros.lock_hide_default_attrs(scap_l.ctl, rotate=False)
+    ros.lock_hide_default_attrs(scap_r.ctl, rotate=False)
 
 
     # L HAND SETUP
@@ -104,6 +135,7 @@ def run():
     hand_l_fk_ctl.create_ctl()
     pm.xform(hand_l_fk_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
 
+    arm_l.pole_vec_obj = hand_l_pv_ctl.ctl
     arm_l.ik_ctl = hand_l_ik_ctl
     arm_l.ik_pv_ctl = hand_l_pv_ctl
     arm_l.fk_ctls = [upperarm_l_fk_ctl, lowerarm_l_fk_ctl, hand_l_fk_ctl]
@@ -112,8 +144,8 @@ def run():
 
     pm.parentConstraint(arm_l.skin_joints[2], hand_l_drv_ctl.main_grp)
 
-    pm.parentConstraint(arm_l.skin_joints[0], "upperarm_l_drv")
-    pm.parentConstraint(arm_l.skin_joints[1], "lowerarm_l_drv")
+    pm.parentConstraint(arm_l.pole_pin_upper_jnt, "upperarm_l_drv")
+    pm.parentConstraint(arm_l.pole_pin_lower_jnt, "lowerarm_l_drv")
     pm.parentConstraint(arm_l.skin_joints[2], "hand_l_drv")
 
     pm.parentConstraint(scap_l.ctl, upperarm_l_fk_ctl.main_grp, maintainOffset=True)
@@ -134,36 +166,42 @@ def run():
     hand_r_drv_ctl.create_ctl()
     pm.xform(hand_r_drv_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
     # ik
-    hand_r_ik_ctl = ros.CtrlSet(ctl_name="hand_r_ik", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp, colour=ros.right_col)
+    hand_r_ik_ctl = ros.CtrlSet(ctl_name="hand_r_ik", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp, colour=ros.right_col, mirror=True)
     hand_r_ik_ctl.create_ctl()
-    pm.xform(hand_r_ik_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(hand_r_ik_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
     # pv
-    hand_r_pv_ctl = ros.CtrlSet(ctl_name="hand_r_pv", ctl_shape="star", offset=True, spaceswitch=True, shape_size=3, parent=arm_r.rig_ctls_grp, colour=ros.right_col)
+    hand_r_pv_ctl = ros.CtrlSet(ctl_name="hand_r_pv", ctl_shape="star", offset=True, spaceswitch=True, shape_size=3, parent=arm_r.rig_ctls_grp, colour=ros.right_col, mirror=True)
     hand_r_pv_ctl.create_ctl()
-    pm.xform(hand_r_pv_ctl.main_grp, matrix=pm.xform("r_arm_position_loc", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(hand_r_pv_ctl.main_grp, matrix=pm.xform("l_arm_position_loc", matrix=True, query=True, worldSpace=True), worldSpace=True)
     #upperarm_r_fk
-    upperarm_r_fk_ctl = ros.CtrlSet(ctl_name="upperarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp, colour=ros.right_col)
+    upperarm_r_fk_ctl = ros.CtrlSet(ctl_name="upperarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=arm_r.rig_ctls_grp, colour=ros.right_col, mirror=True)
     upperarm_r_fk_ctl.create_ctl()
-    pm.xform(upperarm_r_fk_ctl.main_grp, matrix=pm.xform("upperarm_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(upperarm_r_fk_ctl.main_grp, matrix=pm.xform("upperarm_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
     #lowerarm_r_fk
     lowerarm_r_fk_ctl = ros.CtrlSet(ctl_name="lowerarm_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=7, parent=upperarm_r_fk_ctl.ctl, colour=ros.right_col)
     lowerarm_r_fk_ctl.create_ctl()
-    pm.xform(lowerarm_r_fk_ctl.main_grp, matrix=pm.xform("lowerarm_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(lowerarm_r_fk_ctl.main_grp, matrix=pm.xform("lowerarm_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
     #hand_r_fk
     hand_r_fk_ctl = ros.CtrlSet(ctl_name="hand_r_fk", ctl_shape="box", offset=True, spaceswitch=True, shape_size=5, parent=lowerarm_r_fk_ctl.ctl, colour=ros.right_col)
     hand_r_fk_ctl.create_ctl()
-    pm.xform(hand_r_fk_ctl.main_grp, matrix=pm.xform("hand_r_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(hand_r_fk_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    # mirror stuff :3
+    hand_r_ik_ctl.do_mirror()
+    hand_r_pv_ctl.do_mirror()
+    upperarm_r_fk_ctl.do_mirror()
 
+    arm_r.pole_vec_obj = hand_r_pv_ctl.ctl
     arm_r.ik_ctl = hand_r_ik_ctl
     arm_r.ik_pv_ctl = hand_r_pv_ctl
     arm_r.fk_ctls = [upperarm_r_fk_ctl, lowerarm_r_fk_ctl, hand_r_fk_ctl]
     arm_r.driver_ctl = hand_r_drv_ctl.ctl
+    arm_r.mirror = True
     arm_r.create_three_bone_limb()
 
     pm.parentConstraint(arm_r.skin_joints[2], hand_r_drv_ctl.main_grp)
 
-    pm.parentConstraint(arm_r.skin_joints[0], "upperarm_r_drv")
-    pm.parentConstraint(arm_r.skin_joints[1], "lowerarm_r_drv")
+    pm.parentConstraint(arm_r.pole_pin_upper_jnt, "upperarm_r_drv")
+    pm.parentConstraint(arm_r.pole_pin_lower_jnt, "lowerarm_r_drv")
     pm.parentConstraint(arm_r.skin_joints[2], "hand_r_drv")
 
     pm.parentConstraint(scap_r.ctl, upperarm_r_fk_ctl.main_grp, maintainOffset=True)
@@ -172,3 +210,13 @@ def run():
     for i in [upperarm_l_fk_ctl.ctl, lowerarm_l_fk_ctl.ctl, hand_l_fk_ctl.ctl,
               upperarm_r_fk_ctl.ctl, lowerarm_r_fk_ctl.ctl, hand_r_fk_ctl.ctl]:
         ros.lock_hide_default_attrs(i, rotate=False)
+    for i in [hand_l_pv_ctl.ctl, hand_r_pv_ctl.ctl]:
+        ros.lock_hide_default_attrs(i, rotate=False, translate=False)
+    for i in [hand_l_ik_ctl.ctl, hand_r_ik_ctl.ctl]:
+        ros.lock_hide_default_attrs(i, rotate=False, translate=False)
+    for i in [hand_l_drv_ctl.ctl, hand_r_drv_ctl.ctl]:
+        ros.lock_hide_default_attrs(i)
+
+
+    pm.parentConstraint(hip_ctl.ctl, scap_l.main_grp, maintainOffset=True)
+    pm.parentConstraint(hip_ctl.ctl, scap_r.main_grp, maintainOffset=True)

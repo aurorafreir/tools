@@ -211,7 +211,8 @@ class CtrlSet:
                  shape_size:int or list=1,
                  transform_shape=[0, 0, 0],
                  colour=None,
-                 parent=None):
+                 parent=None,
+                 spaces=None):
         self.ctl_name = ctl_name
         self.offset = offset
         self.spaceswitch = spaceswitch
@@ -221,6 +222,7 @@ class CtrlSet:
         self.transform_shape = transform_shape
         self.colour = colour
         self.parent = parent
+        self.spaces:list = spaces
 
         self.main_grp = None
         self.ctl = None
@@ -280,8 +282,6 @@ class CtrlSet:
             (0, -1, 0),
             (.2, -.2, 0),
             (1, 0, 0),
-            # (.2, .2, 0),
-
         ]
 
     def transform_shape_list(self, shape_list):
@@ -365,7 +365,7 @@ class CtrlSet:
         :return:
         """
         if not self.mirror:
-            print("No mirror object for specified control set, skipping :)")
+            print(f"No mirror object for {self.ctl_name}, skipping :)")
         else:
             self.mirror_grp.sx.set(-1)
 
@@ -427,10 +427,10 @@ class Rig:
         self.driver_main_node.useOutlinerColor.set(1)
         self.driver_main_node.outlinerColor.set(driver_outliner_yellow)
 
-        lock_hide_default_attrs(obj=self.main_grp)
-        lock_hide_default_attrs(obj=self.rig_setup_grp)
-        lock_hide_default_attrs(obj=self.ctls_grp)
-        lock_hide_default_attrs(obj=self.driver_main_node)
+        # lock_hide_default_attrs(obj=self.main_grp)
+        # lock_hide_default_attrs(obj=self.rig_setup_grp)
+        # lock_hide_default_attrs(obj=self.ctls_grp)
+        # lock_hide_default_attrs(obj=self.driver_main_node)
 
         print(f"{time.perf_counter()}: finished ensure_setup_is_correct().")
 
@@ -476,6 +476,8 @@ class Limb:
 
         self.driver_object = None
 
+        self.mirror = False
+
     def create_limb_setup(self):
         """
 
@@ -509,6 +511,7 @@ class ThreeBoneLimb(Limb):
                  stretch:bool=True,
                  stretch_modifiers:bool=True,
                  pole_lock:bool=True,
+                 pole_vec_obj:pm.nt.Transform=None,
                  bend_setup:bool=True,
                  ikfk_suffix_replace:str="_drv",
                  ik_ctl:pm.nt.Transform=None,
@@ -526,6 +529,7 @@ class ThreeBoneLimb(Limb):
         self.stretch = stretch
         self.stretch_modifiers = stretch_modifiers
         self.pole_lock = pole_lock
+        self.pole_vec_obj = pole_vec_obj
         self.bend_setup = bend_setup
         self.ikfk_suffix_replace = ikfk_suffix_replace
         self.ik_ctl = ik_ctl
@@ -643,8 +647,8 @@ class ThreeBoneLimb(Limb):
             pm.parent(stretch_grp, self.rig_setup_grp)
 
             length_crv = pm.curve(name=f"{self.limb_name}_stretch_len_crv", p=[[1, 0, 0], [-1, 0, 0]], d=1)
-            cluster_a = pm.cluster(length_crv.cv[0], name=f"{self.limb_name}_cluster_top")
-            cluster_b = pm.cluster(length_crv.cv[1], name=f"{self.limb_name}_cluster_bottom")
+            cluster_a = pm.cluster(length_crv.cv[0], name=f"{self.limb_name}_top_cluster")
+            cluster_b = pm.cluster(length_crv.cv[1], name=f"{self.limb_name}_bottom_cluster")
             pm.parent(length_crv, stretch_grp)
             pm.parent(cluster_a, stretch_grp)
             pm.parent(cluster_b, stretch_grp)
@@ -686,17 +690,25 @@ class ThreeBoneLimb(Limb):
             upper_pin_point_const = pm.pointConstraint(self.ik_joints[0],
                                                        self.pole_pin_upper_jnt,
                                                        maintainOffset=False)
-            lower_pin_point_const = pm.pointConstraint([self.ik_joints[1], self.fk_joints[1]],
+            lower_pin_point_const = pm.pointConstraint([self.skin_joints[1], self.pole_vec_obj],
                                                        self.pole_pin_lower_jnt,
                                                        maintainOffset=False)
-            upper_pin_aim_const = pm.aimConstraint(self.elbow_ctl.ctl if self.elbow_ctl else self.ik_pv_ctl.ctl,
+            upper_pin_aim_const = pm.aimConstraint(self.pole_pin_lower_jnt,
                                                    self.pole_pin_upper_jnt,
                                                    worldUpType='objectrotation',
-                                                   worldUpObject=self.skin_joints[0])
-            lower_pin_aim_const = pm.aimConstraint(self.ik_ctl.ctl,
+                                                   worldUpObject=self.skin_joints[0],
+                                                   aimVector=[-1,0,0] if self.mirror else [1,0,0] )
+            lower_pin_aim_const = pm.aimConstraint(self.skin_joints[2],
                                                    self.pole_pin_lower_jnt,
                                                    worldUpType='objectrotation',
-                                                   worldUpObject=self.skin_joints[1])
+                                                   worldUpObject=self.skin_joints[1],
+                                                   aimVector=[-1,0,0] if self.mirror else [1,0,0] )
+
+            pole_lock_rev = pm.createNode("floatMath", name=f"{self.limb_name}_limb_pole_lock_rev_floatmath")
+            pole_lock_rev.operation.set(1)
+            pm.connectAttr(f"{self.driver_object}.{limb_pole_lock.driver_attr_str}", pole_lock_rev.floatB)
+            pm.connectAttr(pole_lock_rev.outFloat, f"{lower_pin_point_const}.{self.skin_joints[1]}W0")
+            pm.connectAttr(f"{self.driver_object}.{limb_pole_lock.driver_attr_str}", f"{lower_pin_point_const}.{self.pole_vec_obj}W1")
 
         if self.bend_setup:
             pass
