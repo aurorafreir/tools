@@ -87,6 +87,23 @@ def set_up_space_switching(driver_obj:pm.nt.Transform, attr:str, driven_obj:pm.n
 
     return None
 
+def set_up_space_switch(self):
+    """
+    Takes an input object (usually a special SpaceSwitch group, then creates locators for each of the input spaces,
+        then takes a given input attribute,
+    :return:
+    """
+
+    if not self.spaces:
+        raise Exception(f"no spaces set in {self.ctl_name} spaces flag")
+
+    for index, attr_name, input_obj in enumerate(self.spaces):
+        loc = pm.spaceLocator(name=f"{self.ctl_name}_{input_obj}_ss_loc")
+        pm.xform(loc, matrix=pm.xform(input_obj, matrix=True, worldSpace=True, query=True), worldSpace=True)
+        pass
+
+    return None
+
 def fkik_quat_setup(name="",
                         input_obj_a=pm.nt.Transform,
                         input_obj_b=pm.nt.Transform,
@@ -97,7 +114,8 @@ def fkik_quat_setup(name="",
                         slerp_t_attr_flip=False,
                     ):
         """
-        :param name:
+        Creates a quaternion based Slerp setup, used in this case for FKIK switching
+        :param name: Quat setup name, used as a prefix for all nodes in thihs setup
         :param input_obj_a:
         :param input_obj_b:
         :param output_obj:
@@ -106,11 +124,12 @@ def fkik_quat_setup(name="",
         :param slerp_t_attr:
         :return: Created nodes as pm.nt types, euler_to_quat_a, euler_to_quat_b, quat_slerp, quat_to_euler
         """
+        name = f"{name}" if name.endswith("_") else f"{name}_"
+
         # TODO AFOX add in reverse node as an option
         if slerp_t_attr_flip:
             flipper_node = pm.createNode("floatMath")
-        if name:
-            name = f"{name}" if name.endswith("_") else f"{name}_"
+
         euler_to_quat_a = pm.createNode("eulerToQuat", name=f"{name}eulerToQuat_a")
         euler_to_quat_b = pm.createNode("eulerToQuat", name=f"{name}eulerToQuat_b")
         quat_slerp = pm.createNode("quatSlerp", name=f"{name}quatSlerp")
@@ -127,6 +146,7 @@ def fkik_quat_setup(name="",
             input_obj_b.rotate >> euler_to_quat_b.inputRotate
         if output_obj:
             quat_to_euler.outputRotate >> output_obj.rotate
+
         if slerp_t_attr_str:
             slerp_t_obj.attr(slerp_t_attr_str) >> quat_slerp.inputT
         elif slerp_t_attr:
@@ -222,7 +242,7 @@ class CtrlSet:
         self.transform_shape = transform_shape
         self.colour = colour
         self.parent = parent
-        self.spaces:list = spaces
+        self.spaces:list[list] = spaces
 
         self.main_grp = None
         self.ctl = None
@@ -261,7 +281,6 @@ class CtrlSet:
             [-1, 0, 1],
             [1, 0, 1]
         ]
-
         self.square_with_point = [
             (-1, 0, 1),
             (-1, 0, -1),
@@ -351,13 +370,7 @@ class CtrlSet:
 
         return None
 
-    def set_up_space_switch(self):
-        """
-        # TODO AFOX description
-        :return:
-        """
 
-        return None
 
     def do_mirror(self):
         """
@@ -612,13 +625,15 @@ class ThreeBoneLimb(Limb):
 
         fkik_rev = pm.createNode("floatMath", name=f"{self.limb_name}_fkik_rev_floatmath")
         fkik_rev.operation.set(1)
-        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_ctl.main_grp.v)
         pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", fkik_rev.floatB)
+
+        # ctl visibility
+        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_ctl.main_grp.v)
+        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_pv_ctl.main_grp.v)
         pm.connectAttr(fkik_rev.outFloat, self.fk_ctls[0].main_grp.v)
 
         # pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", f"{ik_fk_skin_point_const}.{self.fk_joints[0]}W0")
         # pm.connectAttr(fkik_rev.outFloat, f"{ik_fk_skin_point_const}.{self.ik_joints[0]}W1")
-
 
         fkik_quat_setup(name=self.limb_name,
                         input_obj_a=self.ik_joints[0],
