@@ -447,43 +447,42 @@ class Rig:
             Can also be re-run at any point.
         :return: None
         """
-        func_start_time = time.time()
         print(f"{time.perf_counter()}: started ensure_setup_is_correct().")
+
+        def create_grp_if_nonexistant(obj):
+            """
+            Checks if a group exists, and if it does, returns the group as a PyNode, else it creates and returns it.
+            :return: pm.Transform of found or created group.
+            """
+            if pm.objExists(obj):
+                return pm.PyNode(obj)
+            else:
+                return pm.group(name=obj, empty=True)
+
         # Main rig group
-        if pm.objExists(self.main_grp):
-            self.main_grp = pm.PyNode(self.main_grp)
-        else:
-            self.main_grp = pm.group(name=self.main_grp, empty=True)
+        self.main_grp = create_grp_if_nonexistant(self.main_grp)
 
         # Rig setup group
-        if pm.objExists(self.rig_setup_grp):
-            self.rig_setup_grp = pm.PyNode(self.rig_setup_grp)
-        else:
-            self.rig_setup_grp = pm.group(name=self.rig_setup_grp, empty=True)
+        self.rig_setup_grp = create_grp_if_nonexistant(self.main_grp)
         pm.parent(self.rig_setup_grp, self.main_grp)
 
         # Ctls group
-        if pm.objExists(self.ctls_grp):
-            self.ctls_grp = pm.PyNode(self.ctls_grp)
-        else:
-            self.ctls_grp = pm.group(name=self.ctls_grp, empty=True)
+        self.ctls_grp = create_grp_if_nonexistant(self.ctls_grp)
         pm.parent(self.ctls_grp, self.main_grp)
 
         # Driver node
-        if pm.objExists(self.driver_main_node):
-            self.driver_main_node = pm.PyNode(self.driver_main_node)
-        else:
-            self.driver_main_node = pm.createNode(pm.nt.Transform, name=self.driver_main_node)
+        self.driver_main_node = create_grp_if_nonexistant(self.driver_main_node)
         pm.parent(self.driver_main_node, self.rig_setup_grp)
         self.driver_main_node.useOutlinerColor.set(1)
         self.driver_main_node.outlinerColor.set(driver_outliner_yellow)
 
-        # lock_hide_default_attrs(obj=self.main_grp)
-        # lock_hide_default_attrs(obj=self.rig_setup_grp)
-        # lock_hide_default_attrs(obj=self.ctls_grp)
-        # lock_hide_default_attrs(obj=self.driver_main_node)
+        # Lock and hide attributes on created groups
+        lock_hide_default_attrs(obj=self.main_grp)
+        lock_hide_default_attrs(obj=self.rig_setup_grp)
+        lock_hide_default_attrs(obj=self.ctls_grp)
+        lock_hide_default_attrs(obj=self.driver_main_node)
 
-        print(f"{time.perf_counter()}: finished ensure_setup_is_correct().")
+        print(f"{time.perf_counter():.2}: finished ensure_setup_is_correct().")
 
         return None
 
