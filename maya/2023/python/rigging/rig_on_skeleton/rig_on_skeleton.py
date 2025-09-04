@@ -463,7 +463,7 @@ class Rig:
         self.main_grp = create_grp_if_nonexistant(self.main_grp)
 
         # Rig setup group
-        self.rig_setup_grp = create_grp_if_nonexistant(self.main_grp)
+        self.rig_setup_grp = create_grp_if_nonexistant(self.rig_setup_grp)
         pm.parent(self.rig_setup_grp, self.main_grp)
 
         # Ctls group
@@ -526,6 +526,8 @@ class Limb:
         self.rig_upper_obj = None
 
         self.driver_object = None
+
+        self.ctls = []
 
         self.mirror = False
 
