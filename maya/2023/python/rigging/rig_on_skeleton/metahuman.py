@@ -504,3 +504,5 @@ def run():
 
     print(f"limbs: {[i.limb_name for i in rig.limbs]}")
     print(f"limb ctls: {[[y.ctl_name for y in i.ctls] for i in rig.limbs]}")
+
+    return rig
