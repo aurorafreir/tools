@@ -8,7 +8,6 @@ import time
 
 # STANDARD LIBRARY IMPORTS
 import pymel.core as pm
-from pymel.core import nt
 
 # LOCAL APPLICATION IMPORTS
 from rigging.rig_on_skeleton import rig_on_skeleton as ros

@@ -8,7 +8,6 @@ import math
 
 # STANDARD LIBRARY IMPORTS
 import pymel.core as pm
-from pymel.core import nt
 
 # LOCAL APPLICATION IMPORTS
 
@@ -28,9 +27,9 @@ driver_col = white
 
 def place_temp_pv_locators(
     name: str,
-    upper_joint: pm.nt.Joint,
-    middle_joint: pm.nt.Joint,
-    lower_joint: pm.nt.Joint,
+    upper_joint: pm.PyNode,
+    middle_joint: pm.PyNode,
+    lower_joint: pm.PyNode,
     pv_x_multiplier: float = 1,
 ):
     """
@@ -423,8 +422,8 @@ class CtrlSet:
 class Rig:
     def __init__(self):
         self.main_grp = ""
-        self.rig_setup_grp = "rig_setup"
-        self.ctls_grp = "ctls"
+        self.rig_setup_grp = pm.PyNode("rig_setup")
+        self.ctls_grp = pm.PyNode("ctls")
         self.extracted_ctls_grp = "extracted_ctls"
         self.extracted_control_suffix = "extracted"
 
