@@ -1,5 +1,7 @@
 """
 Trans Rights are Human Rights :3c
+
+This is an example of a rig created for a default Metahuman character
 """
 
 # SYSTEM IMPORTS
@@ -41,17 +43,30 @@ def run():
     root_limb.rig_parent = rig.rig_setup_grp
     root_limb.ctl_parent = rig.ctls_grp
     global_ctl = ros.CtrlSet(
-        ctl_name="global", ctl_shape="square_with_point", shape_size=25, parent=rig.ctls_grp, colour=ros.white
+        ctl_name="global",
+        ctl_shape="square_with_point",
+        shape_size=25,
+        parent=rig.ctls_grp,
+        colour=ros.white,
     )
     global_ctl.create_ctl()
 
     global_off_ctl = ros.CtrlSet(
-        ctl_name="global_off", ctl_shape="square", shape_size=20, parent=global_ctl.ctl, colour=ros.white
+        ctl_name="global_off",
+        ctl_shape="square",
+        shape_size=20,
+        parent=global_ctl.ctl,
+        colour=ros.white,
     )
     global_off_ctl.create_ctl()
 
     root_ctl = ros.CtrlSet(
-        ctl_name="root", ctl_shape="box", offset=True, spaceswitch=True, shape_size=2, parent=rig.ctls_grp
+        ctl_name="root",
+        ctl_shape="box",
+        offset=True,
+        spaceswitch=True,
+        shape_size=2,
+        parent=rig.ctls_grp,
     )
     root_ctl.create_ctl()
 
@@ -76,7 +91,9 @@ def run():
     hip_ctl.create_ctl()
     pm.xform(
         hip_ctl.main_grp,
-        translation=pm.xform("pelvis_drv", translation=True, query=True, worldSpace=True),
+        translation=pm.xform(
+            "pelvis_drv", translation=True, query=True, worldSpace=True
+        ),
         worldSpace=True,
     )
 
@@ -105,7 +122,9 @@ def run():
     )
     neck_01.create_ctl()
     pm.xform(
-        neck_01.main_grp, matrix=pm.xform("neck_01_drv", matrix=True, query=True, worldSpace=True), worldSpace=True
+        neck_01.main_grp,
+        matrix=pm.xform("neck_01_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
     )
     neck_02 = ros.CtrlSet(
         ctl_name="neck_01",
@@ -118,7 +137,9 @@ def run():
     )
     neck_02.create_ctl()
     pm.xform(
-        neck_02.main_grp, matrix=pm.xform("neck_02_drv", matrix=True, query=True, worldSpace=True), worldSpace=True
+        neck_02.main_grp,
+        matrix=pm.xform("neck_02_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
     )
 
     head = ros.CtrlSet(
@@ -132,7 +153,11 @@ def run():
         colour=ros.centre_col,
     )
     head.create_ctl()
-    pm.xform(head.main_grp, matrix=pm.xform("head_drv", matrix=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(
+        head.main_grp,
+        matrix=pm.xform("head_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
+    )
 
     # NECK AND HEAD FINALISING
     pm.parentConstraint(hip_ctl.ctl, neck_01.main_grp, maintainOffset=True)
@@ -165,7 +190,11 @@ def run():
         mirror=True,
     )  # mirror is unused, but makes for a cleaner end result
     scap_l.create_ctl()
-    pm.xform(scap_l.main_grp, t=pm.xform("clavicle_l_drv", t=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(
+        scap_l.main_grp,
+        t=pm.xform("clavicle_l_drv", t=True, query=True, worldSpace=True),
+        worldSpace=True,
+    )
 
     shoulder_l.ctls.append(scap_l)
     rig.limbs.append(shoulder_l)
@@ -186,7 +215,11 @@ def run():
         mirror=True,
     )
     scap_r.create_ctl()
-    pm.xform(scap_r.main_grp, t=pm.xform("clavicle_l_drv", t=True, query=True, worldSpace=True), worldSpace=True)
+    pm.xform(
+        scap_r.main_grp,
+        t=pm.xform("clavicle_l_drv", t=True, query=True, worldSpace=True),
+        worldSpace=True,
+    )
     scap_r.do_mirror()
 
     shoulder_r.ctls.append(scap_r)
@@ -247,7 +280,9 @@ def run():
     )
     hand_l_ik_ctl.create_ctl()
     pm.xform(
-        hand_l_ik_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True
+        hand_l_ik_ctl.main_grp,
+        matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
     )
     # pv
     hand_l_pv_ctl = ros.CtrlSet(
@@ -309,7 +344,9 @@ def run():
     )
     hand_l_fk_ctl.create_ctl()
     pm.xform(
-        hand_l_fk_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True
+        hand_l_fk_ctl.main_grp,
+        matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
     )
 
     arm_l.pole_vec_obj = hand_l_pv_ctl.ctl
@@ -329,7 +366,14 @@ def run():
 
     # add ctls to arm_l.ctl attribute, and append arm_l to rig.limbs
     arm_l.ctls.extend(
-        [hand_l_drv_ctl, hand_l_ik_ctl, hand_l_pv_ctl, upperarm_l_fk_ctl, lowerarm_l_fk_ctl, hand_l_fk_ctl]
+        [
+            hand_l_drv_ctl,
+            hand_l_ik_ctl,
+            hand_l_pv_ctl,
+            upperarm_l_fk_ctl,
+            lowerarm_l_fk_ctl,
+            hand_l_fk_ctl,
+        ]
     )
     rig.limbs.append(arm_l)
 
@@ -383,7 +427,9 @@ def run():
     )
     hand_r_ik_ctl.create_ctl()
     pm.xform(
-        hand_r_ik_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True
+        hand_r_ik_ctl.main_grp,
+        matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
     )
     # pv
     hand_r_pv_ctl = ros.CtrlSet(
@@ -447,7 +493,9 @@ def run():
     )
     hand_r_fk_ctl.create_ctl()
     pm.xform(
-        hand_r_fk_ctl.main_grp, matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True), worldSpace=True
+        hand_r_fk_ctl.main_grp,
+        matrix=pm.xform("hand_l_drv", matrix=True, query=True, worldSpace=True),
+        worldSpace=True,
     )
     # mirror stuff :3
     hand_r_ik_ctl.do_mirror()
@@ -472,7 +520,14 @@ def run():
 
     # add ctls to arm_r.ctl attribute, and append arm_r to rig.limbs
     arm_r.ctls.extend(
-        [hand_r_drv_ctl, hand_r_ik_ctl, hand_r_pv_ctl, upperarm_r_fk_ctl, lowerarm_r_fk_ctl, hand_r_fk_ctl]
+        [
+            hand_r_drv_ctl,
+            hand_r_ik_ctl,
+            hand_r_pv_ctl,
+            upperarm_r_fk_ctl,
+            lowerarm_r_fk_ctl,
+            hand_r_fk_ctl,
+        ]
     )
     rig.limbs.append(arm_r)
 
