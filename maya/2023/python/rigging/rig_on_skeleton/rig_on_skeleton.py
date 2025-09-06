@@ -218,6 +218,11 @@ def create_grp_if_nonexistant(obj):
         return pm.group(name=obj, empty=True)
 
 
+def delete_if_exists(obj):
+    if pm.objExists(obj):
+        pm.delete(obj)
+    return None
+
 class Attr:
     def __init__(
         self,
@@ -899,7 +904,7 @@ class ThreeBoneLimb(Limb):
                 self.pole_pin_lower_jnt,
                 self.pole_pin_upper_jnt,
                 worldUpType="objectrotation",
-                worldUpObject=self.skin_joints[0],
+                worldUpObject=noroll_upper_joint,
                 aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
             )
             lower_pin_aim_const = pm.aimConstraint(
