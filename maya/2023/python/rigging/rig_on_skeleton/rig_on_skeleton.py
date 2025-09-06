@@ -12,8 +12,8 @@ import pymel.core as pm
 # LOCAL APPLICATION IMPORTS
 
 
-blue = (0.05, 0.05, 1)
-red = (1, 0.1, 0.1)
+blue = (0, 0, 1)
+red = (1, 0, 0)
 yellow = (0.9, 0.9, 0.2)
 white = (1, 1, 1)
 
