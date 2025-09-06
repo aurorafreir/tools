@@ -382,6 +382,14 @@ def run():
         weight=0.6,
     )
 
+    shoulder_l_orient_const = pm.orientConstraint(
+        arm_l.dup_parent_joint,
+        arm_l.pole_pin_upper_jnt,
+        pm.PyNode("upperarm_correctiveRootCor_l_drv"),
+        maintainOffset=True,
+    )
+    shoulder_l_orient_const.interpType.set(2)
+
     # add ctls to arm_l.ctl attribute, and append arm_l to rig.limbs
     arm_l.ctls.extend(
         [
@@ -536,7 +544,7 @@ def run():
 
     pm.parentConstraint(scap_r.ctl, upperarm_r_fk_ctl.main_grp, maintainOffset=True)
 
-    # l arm twist
+    # r arm twist
     ros.delete_if_exists("upperarm_twist_01_r_orientConstraint1_drv")
     ros.delete_if_exists("upperarm_twist_02_r_orientConstraint1_drv")
 

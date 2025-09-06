@@ -224,7 +224,7 @@ def delete_if_exists(obj):
     return None
 
 
-def weighted_floatmath_attr_connect(in_obj, out_obj, attrs: list, weight: float):
+def weighted_floatmath_attr_connect(in_obj, out_obj, attrs: list, weight: float = 1):
     """
     Connects a set of attributes from in_obj to out_obj based on a given multiplication weight
     :param in_obj: input object
@@ -707,16 +707,29 @@ class ThreeBoneLimb(Limb):
             i.rename(i.replace(self.ikfk_suffix_replace, "_skin"))
         self.skin_joints[0].rename(self.skin_joints[0][:-1])
 
+        self.dup_parent_joint = pm.duplicate(
+            pm.PyNode(self.input_joints[0]).getParent(), parentOnly=True
+        )[0]
+        self.dup_parent_joint.rename(
+            self.dup_parent_joint.replace(self.ikfk_suffix_replace, "_parent_dup")
+        )
+        self.dup_parent_joint.rename(self.dup_parent_joint[:-1])
+
         if self.verbose:
             print(f"Created joints for {self.limb_name}")
 
         # No Roll upper joint. Orient constrained to upper skin joint on Y and Z.
-        noroll_upper_joint = pm.duplicate(self.input_joints[0], parentOnly=True)[0]
-        noroll_upper_joint.rename(
-            noroll_upper_joint.replace(self.ikfk_suffix_replace, "_noroll")
+        self.noroll_upper_joint = pm.duplicate(self.input_joints[0], parentOnly=True)[0]
+        self.noroll_upper_joint.rename(
+            self.noroll_upper_joint.replace(self.ikfk_suffix_replace, "_noroll")
         )
-        noroll_upper_joint.rename(noroll_upper_joint[:-1])
-        pm.orientConstraint(self.skin_joints[0], noroll_upper_joint, skip="x")
+        self.noroll_upper_joint.rename(self.noroll_upper_joint[:-1])
+        # pm.orientConstraint(self.skin_joints[0], self.noroll_upper_joint, skip="x")
+        # weighted_floatmath_attr_connect(
+        #     in_obj=self.skin_joints[0],
+        #     out_obj=self.noroll_upper_joint,
+        #     attrs=["rx", "ry"],
+        # )
 
         if self.verbose:
             print(f"Created noroll joint for {self.limb_name}")
@@ -725,7 +738,8 @@ class ThreeBoneLimb(Limb):
         pm.parent(self.fk_joints[0], self.rig_setup_grp)
         pm.parent(self.ik_joints[0], self.rig_setup_grp)
         pm.parent(self.skin_joints[0], self.rig_setup_grp)
-        pm.parent(noroll_upper_joint, self.rig_setup_grp)
+        pm.parent(self.noroll_upper_joint, self.rig_setup_grp)
+        pm.parent(self.dup_parent_joint, self.rig_parent)
 
         if self.verbose:
             print(f"Parented joints to {self.rig_setup_grp} for {self.limb_name}")
@@ -752,7 +766,7 @@ class ThreeBoneLimb(Limb):
         )
         pm.parentConstraint(
             self.rig_upper_obj,
-            noroll_upper_joint,
+            self.noroll_upper_joint,
             skipRotate=["x", "y", "z"],
             maintainOffset=True,
         )
@@ -860,7 +874,9 @@ class ThreeBoneLimb(Limb):
             if self.verbose:
                 print(f"Created stretch clusters for {self.limb_name}")
 
-            pm.parentConstraint(noroll_upper_joint, cluster_a, maintainOffset=False)
+            pm.parentConstraint(
+                self.noroll_upper_joint, cluster_a, maintainOffset=False
+            )
             pm.parentConstraint(self.ik_ctl.ctl, cluster_b, maintainOffset=False)
 
             arclength = pm.arclen(length_crv, ch=True)
@@ -926,7 +942,7 @@ class ThreeBoneLimb(Limb):
                 self.pole_pin_lower_jnt,
                 self.pole_pin_upper_jnt,
                 worldUpType="objectrotation",
-                worldUpObject=noroll_upper_joint,
+                worldUpObject=self.noroll_upper_joint,
                 aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
             )
             lower_pin_aim_const = pm.aimConstraint(
@@ -956,5 +972,15 @@ class ThreeBoneLimb(Limb):
 
         if self.bend_setup:
             pass
+
+        # NoRoll joint aim constraint for rotation setup
+        pm.aimConstraint(
+            self.pole_pin_lower_jnt,
+            self.noroll_upper_joint,
+            worldUpType="objectrotation",
+            worldUpObject=self.dup_parent_joint,
+            aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
+            maintainOffset=True,
+        )
 
         return None
