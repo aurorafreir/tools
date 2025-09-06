@@ -293,6 +293,7 @@ def run():
         shape_size=3,
         parent=arm_l.rig_ctls_grp,
         colour=ros.left_col,
+        mirror=True,
     )
     hand_l_pv_ctl.create_ctl()
     pm.xform(
@@ -364,6 +365,23 @@ def run():
 
     pm.parentConstraint(scap_l.ctl, upperarm_l_fk_ctl.main_grp, maintainOffset=True)
 
+    # l arm twist
+    ros.delete_if_exists("upperarm_twist_01_l_orientConstraint1_drv")
+    ros.delete_if_exists("upperarm_twist_02_l_orientConstraint1_drv")
+
+    ros.weighted_floatmath_attr_connect(
+        in_obj=arm_l.skin_joints[0],
+        out_obj=pm.PyNode("upperarm_twist_01_l_drv"),
+        attrs=["rx"],
+        weight=0.3,
+    )
+    ros.weighted_floatmath_attr_connect(
+        in_obj=arm_l.skin_joints[0],
+        out_obj=pm.PyNode("upperarm_twist_02_l_drv"),
+        attrs=["rx"],
+        weight=0.6,
+    )
+
     # add ctls to arm_l.ctl attribute, and append arm_l to rig.limbs
     arm_l.ctls.extend(
         [
@@ -381,9 +399,9 @@ def run():
 
     pv_r_main_grp, _, pv_r_placer = ros.place_temp_pv_locators(
         name="r_arm",
-        upper_joint=pm.PyNode("upperarm_r_drv"),
-        middle_joint=pm.PyNode("lowerarm_r_drv"),
-        lower_joint=pm.PyNode("hand_r_drv"),
+        upper_joint=pm.PyNode("upperarm_l_drv"),
+        middle_joint=pm.PyNode("lowerarm_l_drv"),
+        lower_joint=pm.PyNode("hand_l_drv"),
     )
 
     arm_r = ros.ThreeBoneLimb()
@@ -394,7 +412,7 @@ def run():
     arm_r.rig_parent = rig.rig_setup_grp
     arm_r.ctl_parent = rig.ctls_grp
     arm_r.rig_upper_obj = scap_r.ctl
-    arm_r.verbose = False
+    arm_r.verbose = print_errors
     arm_r.create_limb_setup()
     # CONTROLS #
     # driver
@@ -517,6 +535,23 @@ def run():
     pm.parentConstraint(arm_r.skin_joints[2], "hand_r_drv")
 
     pm.parentConstraint(scap_r.ctl, upperarm_r_fk_ctl.main_grp, maintainOffset=True)
+
+    # l arm twist
+    ros.delete_if_exists("upperarm_twist_01_r_orientConstraint1_drv")
+    ros.delete_if_exists("upperarm_twist_02_r_orientConstraint1_drv")
+
+    ros.weighted_floatmath_attr_connect(
+        in_obj=arm_r.skin_joints[0],
+        out_obj=pm.PyNode("upperarm_twist_01_r_drv"),
+        attrs=["rx"],
+        weight=0.3,
+    )
+    ros.weighted_floatmath_attr_connect(
+        in_obj=arm_r.skin_joints[0],
+        out_obj=pm.PyNode("upperarm_twist_02_r_drv"),
+        attrs=["rx"],
+        weight=0.6,
+    )
 
     # add ctls to arm_r.ctl attribute, and append arm_r to rig.limbs
     arm_r.ctls.extend(

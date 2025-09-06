@@ -223,6 +223,28 @@ def delete_if_exists(obj):
         pm.delete(obj)
     return None
 
+
+def weighted_floatmath_attr_connect(in_obj, out_obj, attrs: list, weight: float):
+    """
+    Connects a set of attributes from in_obj to out_obj based on a given multiplication weight
+    :param in_obj: input object
+    :param out_obj: output object
+    :param attrs: list of attributes to connect from in_obj to out_obj
+    :param weight: multiplication weight
+    :return: None
+    """
+    for attr in attrs:
+        twist_fm = pm.createNode(
+            "floatMath", name=f"{in_obj}_{out_obj}_{attr}_{weight}_floatmath"
+        )
+        twist_fm.operation.set(2)
+        in_obj.attr(attr) >> twist_fm.floatA
+        twist_fm.floatB.set(weight)
+        twist_fm.outFloat >> out_obj.attr(attr)
+
+    return None
+
+
 class Attr:
     def __init__(
         self,
