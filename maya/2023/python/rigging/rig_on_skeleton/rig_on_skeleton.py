@@ -52,7 +52,10 @@ def place_temp_pv_locators(
     pm.aimConstraint(middle_joint, aim_grp, maintainOffset=False)
 
     loc.tx.set(
-        math.dist(pm.xform(upper_joint, t=True, q=True, ws=True), pm.xform(lower_joint, t=True, q=True, ws=True))
+        math.dist(
+            pm.xform(upper_joint, t=True, q=True, ws=True),
+            pm.xform(lower_joint, t=True, q=True, ws=True),
+        )
         * pv_x_multiplier
     )
 
@@ -73,7 +76,14 @@ def get_top_joint(joints: list):
 
 
 def lock_hide_default_attrs(
-    obj: pm.nt.Transform, translate=True, rotate=True, scale=True, visibility=True, custom=None, lock=True, hide=True
+    obj: pm.nt.Transform,
+    translate=True,
+    rotate=True,
+    scale=True,
+    visibility=True,
+    custom=None,
+    lock=True,
+    hide=True,
 ):
     """
 
@@ -103,7 +113,12 @@ def lock_hide_default_attrs(
     return None
 
 
-def set_up_space_switching(driver_obj: pm.nt.Transform, attr: str, driven_obj: pm.nt.Transform, space_objects: list):
+def set_up_space_switching(
+    driver_obj: pm.nt.Transform,
+    attr: str,
+    driven_obj: pm.nt.Transform,
+    space_objects: list,
+):
     """
 
     :param driver_obj:
@@ -130,7 +145,11 @@ def set_up_space_switch(self):
 
     for index, attr_name, input_obj in enumerate(self.spaces):
         loc = pm.spaceLocator(name=f"{self.ctl_name}_{input_obj}_ss_loc")
-        pm.xform(loc, matrix=pm.xform(input_obj, matrix=True, worldSpace=True, query=True), worldSpace=True)
+        pm.xform(
+            loc,
+            matrix=pm.xform(input_obj, matrix=True, worldSpace=True, query=True),
+            worldSpace=True,
+        )
         pass
 
     return None
@@ -188,6 +207,17 @@ def fkik_quat_setup(
     return euler_to_quat_a, euler_to_quat_b, quat_slerp, quat_to_euler
 
 
+def create_grp_if_nonexistant(obj):
+    """
+    Checks if a group exists, and if it does, returns the group as a PyNode, else it creates and returns it.
+    :return: pm.Transform of found or created group.
+    """
+    if pm.objExists(obj):
+        return pm.PyNode(obj)
+    else:
+        return pm.group(name=obj, empty=True)
+
+
 class Attr:
     def __init__(
         self,
@@ -208,7 +238,9 @@ class Attr:
         self.attr_name = attr_name
         self.driver_prefix = driver_prefix
         self.nice_name = nice_name
-        self.short_name = short_name if short_name else attr_name.lower().replace(" ", "")
+        self.short_name = (
+            short_name if short_name else attr_name.lower().replace(" ", "")
+        )
         self.long_name = long_name if long_name else attr_name.replace(" ", "_")
         self.attr_type = attr_type
 
@@ -231,20 +263,32 @@ class Attr:
         """
         kwargs = {}
         if self.attr_type == "float":
-            kwargs = {"attributeType": "float", "minValue": self.float_min, "maxValue": self.float_max}
+            kwargs = {
+                "attributeType": "float",
+                "minValue": self.float_min,
+                "maxValue": self.float_max,
+            }
         if self.dummy_attr:
             kwargs = {"attributeType": "enum", "enumName": "-----:"}
 
-        name_kwargs = {"ln": self.attr_name, "nn": self.nice_name, "sn": self.short_name}
+        name_kwargs = {
+            "ln": self.attr_name,
+            "nn": self.nice_name,
+            "sn": self.short_name,
+        }
 
         # if not pm.attributeQuery(self.attr_name, node=self.main_object, exists=True):
         self.attr = pm.addAttr(self.main_object, **name_kwargs, **kwargs)
 
         # Dummy attributes should be visible but locked
         if self.dummy_attr:
-            lock_hide_default_attrs(obj=self.main_object, custom=[self.attr_name], lock=True, hide=False)
+            lock_hide_default_attrs(
+                obj=self.main_object, custom=[self.attr_name], lock=True, hide=False
+            )
         else:  # and normal attributes to be visible and editable
-            lock_hide_default_attrs(obj=self.main_object, custom=[self.attr_name], lock=False, hide=False)
+            lock_hide_default_attrs(
+                obj=self.main_object, custom=[self.attr_name], lock=False, hide=False
+            )
 
         # Create proxy attr on DRIVER node
         self.sanitized_nice_name = self.nice_name.replace(" ", "_")
@@ -254,7 +298,9 @@ class Attr:
             "nn": f"{self.driver_prefix}_{self.nice_name}",
             "sn": f"{self.driver_prefix}_{self.short_name}",
         }
-        self.driver_attr = pm.addAttr("DRIVER", **driver_name_kwargs, proxy=f"{self.main_object}.{self.attr_name}")
+        self.driver_attr = pm.addAttr(
+            "DRIVER", **driver_name_kwargs, proxy=f"{self.main_object}.{self.attr_name}"
+        )
 
         return None
 
@@ -278,7 +324,11 @@ class CtrlSet:
         self.spaceswitch = spaceswitch
         self.mirror = mirror
         self.ctl_shape = ctl_shape
-        self.shape_size = shape_size if isinstance(shape_size, list) else [shape_size, shape_size, shape_size]
+        self.shape_size = (
+            shape_size
+            if isinstance(shape_size, list)
+            else [shape_size, shape_size, shape_size]
+        )
         self.transform_shape = transform_shape
         self.colour = colour
         self.parent = parent
@@ -359,30 +409,48 @@ class CtrlSet:
         obj_order = []
 
         if self.mirror:
-            self.mirror_grp = pm.group(name=f"{self.ctl_name}_{self.mirror_grp_suffix}", empty=True)
+            self.mirror_grp = pm.group(
+                name=f"{self.ctl_name}_{self.mirror_grp_suffix}", empty=True
+            )
             obj_order.append(self.mirror_grp)
 
         self.main_grp = pm.group(name=f"{self.ctl_name}_{self.grp_suffix}", empty=True)
         obj_order.append(self.main_grp)
 
         if self.spaceswitch:
-            self.spaceswitch_grp = pm.group(name=f"{self.ctl_name}_{self.spaceswitch_grp_suffix}", empty=True)
+            self.spaceswitch_grp = pm.group(
+                name=f"{self.ctl_name}_{self.spaceswitch_grp_suffix}", empty=True
+            )
             obj_order.append(self.spaceswitch_grp)
 
         if self.offset:
-            self.offset_grp = pm.group(name=f"{self.ctl_name}_{self.off_grp_suffix}", empty=True)
+            self.offset_grp = pm.group(
+                name=f"{self.ctl_name}_{self.off_grp_suffix}", empty=True
+            )
             obj_order.append(self.offset_grp)
 
         # Control stuff :3c
         ctl_kwargs = {}
         if not self.ctl_shape or self.ctl_shape == "box":
-            ctl_kwargs = {"degree": 1, "point": self.transform_shape_list(shape_list=self.box)}
+            ctl_kwargs = {
+                "degree": 1,
+                "point": self.transform_shape_list(shape_list=self.box),
+            }
         if self.ctl_shape == "square_with_point":
-            ctl_kwargs = {"degree": 1, "point": self.transform_shape_list(shape_list=self.square_with_point)}
+            ctl_kwargs = {
+                "degree": 1,
+                "point": self.transform_shape_list(shape_list=self.square_with_point),
+            }
         if self.ctl_shape == "square":
-            ctl_kwargs = {"degree": 1, "point": self.transform_shape_list(shape_list=self.square)}
+            ctl_kwargs = {
+                "degree": 1,
+                "point": self.transform_shape_list(shape_list=self.square),
+            }
         if self.ctl_shape == "star":
-            ctl_kwargs = {"degree": 3, "point": self.transform_shape_list(shape_list=self.star)}
+            ctl_kwargs = {
+                "degree": 3,
+                "point": self.transform_shape_list(shape_list=self.star),
+            }
 
         self.ctl = pm.curve(n=f"{self.ctl_name}_{self.ctl_suffix}", **ctl_kwargs)
         if self.ctl_shape == "star":
@@ -400,11 +468,15 @@ class CtrlSet:
             pm.parent(obj, obj_order[index - 1])
 
         if self.parent:
-            pm.parent(self.main_grp if not self.mirror_grp else self.mirror_grp, self.parent)
+            pm.parent(
+                self.main_grp if not self.mirror_grp else self.mirror_grp, self.parent
+            )
 
         pm.select(d=True)
 
-        print(f"{time.perf_counter()}: Created controller set {self.ctl_name} with objects {obj_order}")
+        print(
+            f"{time.perf_counter()}: Created controller set {self.ctl_name} with objects {obj_order}"
+        )
 
         return None
 
@@ -447,16 +519,6 @@ class Rig:
         :return: None
         """
         print(f"{time.perf_counter()}: started ensure_setup_is_correct().")
-
-        def create_grp_if_nonexistant(obj):
-            """
-            Checks if a group exists, and if it does, returns the group as a PyNode, else it creates and returns it.
-            :return: pm.Transform of found or created group.
-            """
-            if pm.objExists(obj):
-                return pm.PyNode(obj)
-            else:
-                return pm.group(name=obj, empty=True)
 
         # Main rig group
         self.main_grp = create_grp_if_nonexistant(self.main_grp)
@@ -534,24 +596,18 @@ class Limb:
 
     def create_limb_setup(self):
         """
-
-        :return:
+        Does basic group setup for each limb
+        :return: None
         """
         if not self.rig_setup_grp:
             self.rig_setup_grp = f"{self.limb_name}_rig_setup"
-        if pm.objExists(self.rig_setup_grp):
-            self.rig_setup_grp = pm.PyNode(self.rig_setup_grp)
-        else:
-            self.rig_setup_grp = pm.group(name=self.rig_setup_grp, empty=True)
+        self.rig_setup_grp = create_grp_if_nonexistant(self.rig_setup_grp)
 
         pm.parent(self.rig_setup_grp, self.rig_parent)
 
         if not self.rig_ctls_grp:
             self.rig_ctls_grp = f"{self.limb_name}_ctls"
-        if pm.objExists(self.rig_ctls_grp):
-            self.rig_ctls_grp = pm.PyNode(self.rig_ctls_grp)
-        else:
-            self.rig_ctls_grp = pm.group(name=self.rig_ctls_grp, empty=True)
+        self.rig_ctls_grp = create_grp_if_nonexistant(self.rig_ctls_grp)
 
         pm.parent(self.rig_ctls_grp, self.ctl_parent)
 
@@ -607,7 +663,9 @@ class ThreeBoneLimb(Limb):
         :return: None
         """
 
-        self.rig_upper_obj = self.rig_upper_obj if self.rig_upper_obj else self.ctl_parent
+        self.rig_upper_obj = (
+            self.rig_upper_obj if self.rig_upper_obj else self.ctl_parent
+        )
 
         self.fk_joints = pm.duplicate(self.input_joints, parentOnly=True)
         for i in self.fk_joints:
@@ -627,7 +685,9 @@ class ThreeBoneLimb(Limb):
 
         # No Roll upper joint. Orient constrained to upper skin joint on Y and Z.
         noroll_upper_joint = pm.duplicate(self.input_joints[0], parentOnly=True)[0]
-        noroll_upper_joint.rename(noroll_upper_joint.replace(self.ikfk_suffix_replace, "_noroll"))
+        noroll_upper_joint.rename(
+            noroll_upper_joint.replace(self.ikfk_suffix_replace, "_noroll")
+        )
         noroll_upper_joint.rename(noroll_upper_joint[:-1])
         pm.orientConstraint(self.skin_joints[0], noroll_upper_joint, skip="x")
 
@@ -645,7 +705,9 @@ class ThreeBoneLimb(Limb):
 
         # IK setup and constraint to ik control
         ik_handle = pm.ikHandle(
-            name=f"{self.limb_name}_ikh", startJoint=self.ik_joints[0], endEffector=self.ik_joints[2]
+            name=f"{self.limb_name}_ikh",
+            startJoint=self.ik_joints[0],
+            endEffector=self.ik_joints[2],
         )
         pm.parent(ik_handle[0], self.rig_setup_grp)
         pm.parentConstraint(self.ik_ctl.ctl, ik_handle[0], maintainOffset=False)
@@ -658,13 +720,26 @@ class ThreeBoneLimb(Limb):
 
         # upper object constraints
         pm.parentConstraint(self.rig_upper_obj, self.ik_joints[0], maintainOffset=True)
-        ik_fk_skin_point_const = pm.pointConstraint(self.fk_joints[0], self.ik_joints[0], self.skin_joints[0])
-        pm.parentConstraint(self.rig_upper_obj, noroll_upper_joint, skipRotate=["x", "y", "z"], maintainOffset=True)
+        ik_fk_skin_point_const = pm.pointConstraint(
+            self.fk_joints[0], self.ik_joints[0], self.skin_joints[0]
+        )
+        pm.parentConstraint(
+            self.rig_upper_obj,
+            noroll_upper_joint,
+            skipRotate=["x", "y", "z"],
+            maintainOffset=True,
+        )
 
         # FK control constraints
-        pm.parentConstraint(self.fk_ctls[0].ctl, self.fk_joints[0], maintainOffset=False)
-        pm.parentConstraint(self.fk_ctls[1].ctl, self.fk_joints[1], maintainOffset=False)
-        pm.parentConstraint(self.fk_ctls[2].ctl, self.fk_joints[2], maintainOffset=False)
+        pm.parentConstraint(
+            self.fk_ctls[0].ctl, self.fk_joints[0], maintainOffset=False
+        )
+        pm.parentConstraint(
+            self.fk_ctls[1].ctl, self.fk_joints[1], maintainOffset=False
+        )
+        pm.parentConstraint(
+            self.fk_ctls[2].ctl, self.fk_joints[2], maintainOffset=False
+        )
 
         # Attribute creation
         limb_ik_controls_attr = Attr(
@@ -687,13 +762,22 @@ class ThreeBoneLimb(Limb):
         if self.verbose:
             print(f"Created attributes for {self.limb_name} on {self.driver_ctl}")
 
-        fkik_rev = pm.createNode("floatMath", name=f"{self.limb_name}_fkik_rev_floatmath")
+        fkik_rev = pm.createNode(
+            "floatMath", name=f"{self.limb_name}_fkik_rev_floatmath"
+        )
         fkik_rev.operation.set(1)
-        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", fkik_rev.floatB)
+        pm.connectAttr(
+            f"{self.driver_object}.{limb_fkik.driver_attr_str}", fkik_rev.floatB
+        )
 
         # ctl visibility
-        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_ctl.main_grp.v)
-        pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_pv_ctl.main_grp.v)
+        pm.connectAttr(
+            f"{self.driver_object}.{limb_fkik.driver_attr_str}", self.ik_ctl.main_grp.v
+        )
+        pm.connectAttr(
+            f"{self.driver_object}.{limb_fkik.driver_attr_str}",
+            self.ik_pv_ctl.main_grp.v,
+        )
         pm.connectAttr(fkik_rev.outFloat, self.fk_ctls[0].main_grp.v)
 
         # pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", f"{ik_fk_skin_point_const}.{self.fk_joints[0]}W0")
@@ -734,9 +818,15 @@ class ThreeBoneLimb(Limb):
             stretch_grp = pm.group(name=f"{self.limb_name}_stretch_grp", empty=True)
             pm.parent(stretch_grp, self.rig_setup_grp)
 
-            length_crv = pm.curve(name=f"{self.limb_name}_stretch_len_crv", p=[[1, 0, 0], [-1, 0, 0]], d=1)
-            cluster_a = pm.cluster(length_crv.cv[0], name=f"{self.limb_name}_top_cluster")
-            cluster_b = pm.cluster(length_crv.cv[1], name=f"{self.limb_name}_bottom_cluster")
+            length_crv = pm.curve(
+                name=f"{self.limb_name}_stretch_len_crv", p=[[1, 0, 0], [-1, 0, 0]], d=1
+            )
+            cluster_a = pm.cluster(
+                length_crv.cv[0], name=f"{self.limb_name}_top_cluster"
+            )
+            cluster_b = pm.cluster(
+                length_crv.cv[1], name=f"{self.limb_name}_bottom_cluster"
+            )
             pm.parent(length_crv, stretch_grp)
             pm.parent(cluster_a[1], stretch_grp)
             pm.parent(cluster_b[1], stretch_grp)
@@ -749,9 +839,13 @@ class ThreeBoneLimb(Limb):
             arclength = pm.arclen(length_crv, ch=True)
 
             # SETTING CONSTANTS FOR UPPER > LOWER TX LENGTH AND LOWER > HAND/FOOT TX LENGTH
-            upper_to_lower_const = pm.createNode("floatConstant", name=f"{self.limb_name.upper()}_UL_CONST")
+            upper_to_lower_const = pm.createNode(
+                "floatConstant", name=f"{self.limb_name.upper()}_UL_CONST"
+            )
             upper_to_lower_const.inFloat.set(self.ik_joints[1].tx.get())
-            lower_to_hand_const = pm.createNode("floatConstant", name=f"{self.limb_name.upper()}_LH_CONST")
+            lower_to_hand_const = pm.createNode(
+                "floatConstant", name=f"{self.limb_name.upper()}_LH_CONST"
+            )
             lower_to_hand_const.inFloat.set(self.ik_joints[2].tx.get())
 
             if self.stretch_modifiers:
@@ -774,20 +868,32 @@ class ThreeBoneLimb(Limb):
             )
             limb_pole_lock.create_attr()
 
-            self.pole_pin_upper_jnt = pm.duplicate(self.input_joints[0], parentOnly=True)[0]
+            self.pole_pin_upper_jnt = pm.duplicate(
+                self.input_joints[0], parentOnly=True
+            )[0]
             self.pole_pin_upper_jnt.rename(
-                self.pole_pin_upper_jnt.name()[:-1].replace(self.ikfk_suffix_replace, "_pin")
+                self.pole_pin_upper_jnt.name()[:-1].replace(
+                    self.ikfk_suffix_replace, "_pin"
+                )
             )
             pm.parent(self.pole_pin_upper_jnt, self.rig_setup_grp)
-            self.pole_pin_lower_jnt = pm.duplicate(self.input_joints[1], parentOnly=True)[0]
+            self.pole_pin_lower_jnt = pm.duplicate(
+                self.input_joints[1], parentOnly=True
+            )[0]
             self.pole_pin_lower_jnt.rename(
-                self.pole_pin_lower_jnt.name()[:-1].replace(self.ikfk_suffix_replace, "_pin")
+                self.pole_pin_lower_jnt.name()[:-1].replace(
+                    self.ikfk_suffix_replace, "_pin"
+                )
             )
             pm.parent(self.pole_pin_lower_jnt, self.rig_setup_grp)
 
-            upper_pin_point_const = pm.pointConstraint(self.ik_joints[0], self.pole_pin_upper_jnt, maintainOffset=False)
+            upper_pin_point_const = pm.pointConstraint(
+                self.ik_joints[0], self.pole_pin_upper_jnt, maintainOffset=False
+            )
             lower_pin_point_const = pm.pointConstraint(
-                [self.skin_joints[1], self.pole_vec_obj], self.pole_pin_lower_jnt, maintainOffset=False
+                [self.skin_joints[1], self.pole_vec_obj],
+                self.pole_pin_lower_jnt,
+                maintainOffset=False,
             )
             upper_pin_aim_const = pm.aimConstraint(
                 self.pole_pin_lower_jnt,
@@ -804,10 +910,18 @@ class ThreeBoneLimb(Limb):
                 aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
             )
 
-            pole_lock_rev = pm.createNode("floatMath", name=f"{self.limb_name}_limb_pole_lock_rev_floatmath")
+            pole_lock_rev = pm.createNode(
+                "floatMath", name=f"{self.limb_name}_limb_pole_lock_rev_floatmath"
+            )
             pole_lock_rev.operation.set(1)
-            pm.connectAttr(f"{self.driver_object}.{limb_pole_lock.driver_attr_str}", pole_lock_rev.floatB)
-            pm.connectAttr(pole_lock_rev.outFloat, f"{lower_pin_point_const}.{self.skin_joints[1]}W0")
+            pm.connectAttr(
+                f"{self.driver_object}.{limb_pole_lock.driver_attr_str}",
+                pole_lock_rev.floatB,
+            )
+            pm.connectAttr(
+                pole_lock_rev.outFloat,
+                f"{lower_pin_point_const}.{self.skin_joints[1]}W0",
+            )
             pm.connectAttr(
                 f"{self.driver_object}.{limb_pole_lock.driver_attr_str}",
                 f"{lower_pin_point_const}.{self.pole_vec_obj}W1",
