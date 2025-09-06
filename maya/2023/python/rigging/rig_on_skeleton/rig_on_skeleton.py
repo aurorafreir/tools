@@ -494,8 +494,8 @@ class CtrlSet:
 class Rig:
     def __init__(self):
         self.main_grp = ""
-        self.rig_setup_grp = pm.PyNode("rig_setup")
-        self.ctls_grp = pm.PyNode("ctls")
+        self.rig_setup_grp = "rig_setup"
+        self.ctls_grp = "ctls"
         self.extracted_ctls_grp = "extracted_ctls"
         self.extracted_control_suffix = "extracted"
 
