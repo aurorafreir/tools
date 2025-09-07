@@ -725,12 +725,6 @@ class ThreeBoneLimb(Limb):
             self.noroll_upper_joint.replace(self.ikfk_suffix_replace, "_noroll")
         )
         self.noroll_upper_joint.rename(self.noroll_upper_joint[:-1])
-        # pm.orientConstraint(self.skin_joints[0], self.noroll_upper_joint, skip="x")
-        # weighted_floatmath_attr_connect(
-        #     in_obj=self.skin_joints[0],
-        #     out_obj=self.noroll_upper_joint,
-        #     attrs=["rx", "ry"],
-        # )
 
         if self.verbose:
             print(f"Created noroll joint for {self.limb_name}")
@@ -822,9 +816,6 @@ class ThreeBoneLimb(Limb):
         )
         pm.connectAttr(fkik_rev.outFloat, self.fk_ctls[0].main_grp.v)
 
-        # pm.connectAttr(f"{self.driver_object}.{limb_fkik.driver_attr_str}", f"{ik_fk_skin_point_const}.{self.fk_joints[0]}W0")
-        # pm.connectAttr(fkik_rev.outFloat, f"{ik_fk_skin_point_const}.{self.ik_joints[0]}W1")
-
         fkik_quat_setup(
             name=self.limb_name,
             input_obj_a=self.ik_joints[0],
@@ -852,9 +843,6 @@ class ThreeBoneLimb(Limb):
 
         if self.verbose:
             print(f"Created FKIK quat setup for {self.limb_name}")
-
-        # Attribute linking
-        # limb_fkik.driver_attr >>
 
         if self.stretch:
             stretch_grp = pm.group(name=f"{self.limb_name}_stretch_grp", empty=True)
@@ -896,11 +884,6 @@ class ThreeBoneLimb(Limb):
                 pass
 
         if self.pole_lock:
-            # if not self.elbow_ctl:
-            #     raise Exception(f"No elbow ctl specified for {self.limb_name}")
-            # if not self.pole_vec_ctl:
-            #     raise Exception(f"No pole vector control specified for {self.limb_name}")
-
             # Attribute creation
             limb_pole_lock = Attr(
                 main_object=self.driver_ctl,
