@@ -961,7 +961,7 @@ class ThreeBoneLimb(Limb):
             pass
 
         # NoRoll joint aim constraint for rotation setup
-        pm.aimConstraint(
+        noroll_aim_const = pm.aimConstraint(
             self.pole_pin_lower_jnt,
             self.noroll_upper_joint,
             worldUpType="objectrotation",
@@ -969,5 +969,7 @@ class ThreeBoneLimb(Limb):
             aimVector=self.aim_axis,
             maintainOffset=True,
         )
+        noroll_aim_const.upVectorX.set(1)  # These two calls stop the upperarm from twisting when pointed directly down
+        noroll_aim_const.upVectorY.set(0)
 
         return None
