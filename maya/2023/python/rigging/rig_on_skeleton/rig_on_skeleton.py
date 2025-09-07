@@ -969,7 +969,5 @@ class ThreeBoneLimb(Limb):
             aimVector=self.aim_axis,
             maintainOffset=True,
         )
-        noroll_aim_const.upVectorX.set(1)  # These two calls stop the upperarm from twisting when pointed directly down
-        noroll_aim_const.upVectorY.set(0)
 
         return None
