@@ -713,7 +713,8 @@ class ThreeBoneLimb(Limb):
         self.dup_parent_joint.rename(
             self.dup_parent_joint.replace(self.ikfk_suffix_replace, "_parent_dup")
         )
-        self.dup_parent_joint.rename(self.dup_parent_joint[:-1])
+        self.dup_parent_joint.rename(self.dup_parent_joint.name()[:-1])
+        pm.parentConstraint(self.rig_upper_obj, self.dup_parent_joint)
 
         if self.verbose:
             print(f"Created joints for {self.limb_name}")
@@ -739,7 +740,7 @@ class ThreeBoneLimb(Limb):
         pm.parent(self.ik_joints[0], self.rig_setup_grp)
         pm.parent(self.skin_joints[0], self.rig_setup_grp)
         pm.parent(self.noroll_upper_joint, self.rig_setup_grp)
-        pm.parent(self.dup_parent_joint, self.rig_parent)
+        pm.parent(self.dup_parent_joint, self.rig_setup_grp)
 
         if self.verbose:
             print(f"Parented joints to {self.rig_setup_grp} for {self.limb_name}")
