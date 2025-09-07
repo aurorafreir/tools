@@ -618,6 +618,7 @@ class Limb:
         self.ctls = []
 
         self.mirror = False
+        self.aim_axis = None
 
         self.verbose = True
 
@@ -689,6 +690,8 @@ class ThreeBoneLimb(Limb):
         Creates a basic three joint limb, with FKIK, and options for stretch
         :return: None
         """
+
+        self.aim_axis = [-1, 0, 0] if self.mirror else [1, 0, 0]
 
         self.rig_upper_obj = (
             self.rig_upper_obj if self.rig_upper_obj else self.ctl_parent
@@ -927,14 +930,14 @@ class ThreeBoneLimb(Limb):
                 self.pole_pin_upper_jnt,
                 worldUpType="objectrotation",
                 worldUpObject=self.noroll_upper_joint,
-                aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
+                aimVector=self.aim_axis,
             )
             lower_pin_aim_const = pm.aimConstraint(
                 self.skin_joints[2],
                 self.pole_pin_lower_jnt,
                 worldUpType="objectrotation",
                 worldUpObject=self.skin_joints[1],
-                aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
+                aimVector=self.aim_axis,
             )
 
             pole_lock_rev = pm.createNode(
@@ -963,7 +966,7 @@ class ThreeBoneLimb(Limb):
             self.noroll_upper_joint,
             worldUpType="objectrotation",
             worldUpObject=self.dup_parent_joint,
-            aimVector=[-1, 0, 0] if self.mirror else [1, 0, 0],
+            aimVector=self.aim_axis,
             maintainOffset=True,
         )
 
