@@ -1,9 +1,0 @@
-[submodule "maya/2023/third_party/rig_on_skeleton"]
-	path = maya/2023/third_party/rig_on_skeleton
-	url = https://github.com/aurorafreir/rig_on_skeleton
-[submodule "maya/2023/third_party/mGearScripts"]
-	path = maya/2023/third_party/mGearScripts
-	url = https://github.com/aurorafreir/mGearScripts
-[submodule "maya/2023/third_party/SkeletonConnector"]
-	path = maya/2023/third_party/SkeletonConnector
-	url = https://github.com/aurorafreir/SkeletonConnector
