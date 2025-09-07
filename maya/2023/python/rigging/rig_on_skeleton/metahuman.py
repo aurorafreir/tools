@@ -369,18 +369,26 @@ def run():
     ros.delete_if_exists("upperarm_twist_01_l_orientConstraint1_drv")
     ros.delete_if_exists("upperarm_twist_02_l_orientConstraint1_drv")
 
-    ros.weighted_floatmath_attr_connect(
-        in_obj=arm_l.skin_joints[0],
-        out_obj=pm.PyNode("upperarm_twist_01_l_drv"),
-        attrs=["rx"],
-        weight=0.3,
+    upperarm_twist_01_oc = pm.orientConstraint(
+        arm_l.noroll_upper_joint,
+        arm_l.pole_pin_lower_jnt,
+        "upperarm_twist_01_l_drv",
+        skip=["y", "z"],
+        maintainOffset=True,
     )
-    ros.weighted_floatmath_attr_connect(
-        in_obj=arm_l.skin_joints[0],
-        out_obj=pm.PyNode("upperarm_twist_02_l_drv"),
-        attrs=["rx"],
-        weight=0.6,
+    upperarm_twist_01_oc.interpType.set(2)
+    upperarm_twist_01_oc.attr(f"{arm_l.noroll_upper_joint}W0").set(0.8)
+    upperarm_twist_01_oc.attr(f"{arm_l.pole_pin_lower_jnt}W1").set(0.2)
+    upperarm_twist_02_oc = pm.orientConstraint(
+        arm_l.noroll_upper_joint,
+        arm_l.pole_pin_lower_jnt,
+        "upperarm_twist_02_l_drv",
+        skip=["y", "z"],
+        maintainOffset=True,
     )
+    upperarm_twist_02_oc.interpType.set(2)
+    upperarm_twist_02_oc.attr(f"{arm_l.noroll_upper_joint}W0").set(0.4)
+    upperarm_twist_02_oc.attr(f"{arm_l.pole_pin_lower_jnt}W1").set(0.6)
 
     shoulder_l_orient_const = pm.orientConstraint(
         arm_l.dup_parent_joint,
